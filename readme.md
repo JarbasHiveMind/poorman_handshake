@@ -13,13 +13,12 @@ client = HandShake()
 # send this from client to server over any insecure channel
 pub = client.pubkey
 
-# this key will be used after handshake for encryption
-server.generate_key()
 shake = server.communicate_key(pub)
 
 # send shake from server to client over any insecure channel
 client.receive_key(shake)
 
+# start communicating securely using the exchanged key 
 assert client.aes_key == server.aes_key
 ```
 
