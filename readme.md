@@ -24,5 +24,5 @@ assert client.aes_key == server.aes_key
 
 ## How does it work
 
-ephemeral PGP keys are created and used only to exchange a symmetric key to 
+ephemeral RSA keys are created and used only to exchange a symmetric key to 
 be used in follow up communications, it's dead simple
