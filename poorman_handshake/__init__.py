@@ -45,15 +45,43 @@ class HandShake:
         pubkey, _ = pgpy.PGPKey.from_blob(pub)
         return pubkey
 
-    def communicate_key(self, pub):
+    def communicate_secret(self, pub):
         # read pubkey from client
         pubkey = self.read_pubkey(pub)
+        # generate new key
         self.aes_key = random_key()
         text_message = pgpy.PGPMessage.new(self.aes_key)
+        # encrypt generated key
         encrypted_message = pubkey.encrypt(text_message)
+        # sign message
+        # the bitwise OR operator '|' is used to add a signature to a PGPMessage.
+        encrypted_message |= self.private_key.sign(encrypted_message)
         return str(encrypted_message)
 
-    def receive_key(self, encrypted_message):
+    def communicate_pub(self, pub):
+        # send pubkey to client
+        pubkey = self.read_pubkey(pub)
+        text_message = pgpy.PGPMessage.new(self.pubkey)
+        # encrypt pubkey
+        encrypted_message = pubkey.encrypt(text_message)
+        # sign message
+        # the bitwise OR operator '|' is used to add a signature to a PGPMessage.
+        encrypted_message |= self.private_key.sign(encrypted_message)
+        return str(encrypted_message)
+
+    def receive_handshake(self, encrypted_message):
         message_from_blob = pgpy.PGPMessage.from_blob(encrypted_message)
         decrypted = self.private_key.decrypt(message_from_blob)
         self.aes_key = decrypted.message
+
+    def verify(self, encrypted_message, encrypted_pub):
+        message = pgpy.PGPMessage.from_blob(encrypted_message)
+        pub = pgpy.PGPMessage.from_blob(encrypted_pub)
+        decrypted_pub = self.private_key.decrypt(pub).message
+        pubkey = self.read_pubkey(str(decrypted_pub))
+        return pubkey.verify(message)
+
+    def receive_and_verify(self, encrypted_message, encrypted_pub):
+        verified = self.verify(encrypted_message, encrypted_pub)
+        if verified:
+            self.receive_handshake(encrypted_message)

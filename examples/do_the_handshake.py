@@ -6,10 +6,10 @@ client = HandShake()
 # send this from client to server over any insecure channel
 pub = client.pubkey
 
-shake = server.communicate_key(pub)
+shake = server.communicate_secret(pub)
 
 # send shake from server to client over any insecure channel
-client.receive_key(shake)
+client.receive_handshake(shake)
 
 assert client.aes_key == server.aes_key
 

@@ -1,10 +1,3 @@
-# Poor Man's Handshake
-
-securely exchange symmetric encryption keys over insecure channels
-
-## Usage
-
-```python
 from poorman_handshake import HandShake
 
 server = HandShake()
@@ -22,9 +15,3 @@ client.receive_and_verify(shake, server_pub)
 assert client.aes_key == server.aes_key
 
 print(client.aes_key)
-```
-
-## How does it work
-
-ephemeral RSA keys are created and used only to exchange a symmetric key to 
-be used in follow up communications, it's dead simple
