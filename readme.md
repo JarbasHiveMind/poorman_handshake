@@ -6,6 +6,30 @@ securely exchange symmetric encryption keys over insecure channels
 
 Basic usage below, check [examples](./examples) folder for more advanced usage
 
+A session key can be exchanged if there is a pre shared password
+```python
+from poorman_handshake import PasswordHandShake
+from secrets import compare_digest
+
+password = "Super Secret Pass Phrase"
+bob = PasswordHandShake(password)
+alice = PasswordHandShake(password)
+
+alice_shake = alice.send_handshake()
+bob_shake = bob.send_handshake()
+
+# exchange handshakes (hsubs) over any insecure channel
+if not alice.receive_handshake(bob_shake):
+    raise KeyError
+if not bob.receive_handshake(alice_shake):
+    raise KeyError
+
+# a common key was derived from the password
+assert compare_digest(alice.secret, bob.secret)
+```
+
+Another possibility is to use PGP based key exchange
+
 ```python
 from poorman_handshake import HandShake
 from secrets import compare_digest
@@ -21,21 +45,9 @@ alice.load_public(bob.pubkey)
 alice_shake = alice.generate_secret()
 bob_shake = bob.generate_secret()
 
-assert not compare_digest(bob.secret, alice.secret)
-
 # read and verify handshakes
 bob.receive_and_verify(alice_shake)
 alice.receive_and_verify(bob_shake)
 
 assert compare_digest(bob.secret, alice.secret)
 ```
-
-## How does it work
-
-PGP keys are used only to exchange a symmetric key to be used in follow-up communications
-
-if the public keys have been previously exchanged, this is secure, if not 
-then you are still vulnerable to man in the middle attacks
-
-Recommended usage is either pre sharing pubkeys some other way or [trust on 
-first use](https://en.wikipedia.org/wiki/Trust_on_first_use)
