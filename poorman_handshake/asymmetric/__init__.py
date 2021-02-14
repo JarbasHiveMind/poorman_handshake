@@ -41,7 +41,7 @@ class HandShake:
         pubkey, _ = pgpy.PGPKey.from_blob(key_blob)
         return pubkey
 
-    def generate_secret(self, pub=None):
+    def generate_handshake(self, pub=None):
         pub = pub or self.target_key
         # read pubkey from client
         pubkey = self.import_key(pub)
@@ -59,34 +59,34 @@ class HandShake:
     def load_public(self, pub):
         self.target_key = pub
 
-    def receive_handshake(self, encrypted_message):
-        message_from_blob = pgpy.PGPMessage.from_blob(encrypted_message)
+    def receive_handshake(self, shake):
+        message_from_blob = pgpy.PGPMessage.from_blob(shake)
         decrypted = self.private_key.decrypt(message_from_blob)
         # XOR
         self.secret = bytes(a ^ b for (a, b) in
                             zip(self.secret, decrypted.message))
 
-    def verify(self, encrypted_message, pub):
-        message = pgpy.PGPMessage.from_blob(encrypted_message)
+    def verify(self, shake, pub):
+        message = pgpy.PGPMessage.from_blob(shake)
         pubkey = self.import_key(pub)
         return pubkey.verify(message)
 
-    def receive_and_verify(self, encrypted_message, pub=None):
+    def receive_and_verify(self, shake, pub=None):
         pub = pub or self.target_key
-        verified = self.verify(encrypted_message, pub)
+        verified = self.verify(shake, pub)
         if verified:
-            self.receive_handshake(encrypted_message)
+            self.receive_handshake(shake)
 
 
 class HalfHandShake(HandShake):
 
-    def generate_secret(self, pub=None):
-        enc = super().generate_secret(pub)
+    def generate_handshake(self, pub=None):
+        enc = super().generate_handshake(pub)
         self.secret = bytes(self.secret)
         return enc
 
-    def receive_handshake(self, encrypted_message):
-        message_from_blob = pgpy.PGPMessage.from_blob(encrypted_message)
+    def receive_handshake(self, shake):
+        message_from_blob = pgpy.PGPMessage.from_blob(shake)
         decrypted = self.private_key.decrypt(message_from_blob)
         # XOR
         self.secret = bytes(decrypted.message)

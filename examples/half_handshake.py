@@ -18,7 +18,7 @@ alice.load_public(bob.pubkey)  # previously exchanged securely
 
 def do_the_shake(alice, bob):
     # exchange handshakes (encrypted with pubkey) over any insecure channel
-    bob_shake = bob.generate_secret(alice.pubkey)
+    bob_shake = bob.generate_handshake(alice.pubkey)
 
     # read and verify handshakes
     alice.receive_and_verify(bob_shake)

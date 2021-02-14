@@ -14,13 +14,13 @@ eve = PasswordHandShake("WRONG PASSWORD")
 
 
 def do_the_shake(alice, bob):
-    alice_shake = alice.send_handshake()
-    bob_shake = bob.send_handshake()
+    alice_shake = alice.generate_handshake()
+    bob_shake = bob.generate_handshake()
 
     # exchange handshakes (hsubs) over any insecure channel
-    if not alice.receive_handshake(bob_shake):
+    if not alice.receive_and_verify(bob_shake):
         raise KeyError
-    if not bob.receive_handshake(alice_shake):
+    if not bob.receive_and_verify(alice_shake):
         raise KeyError
 
     # a common key was derived from the password

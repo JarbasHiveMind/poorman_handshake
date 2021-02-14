@@ -8,14 +8,22 @@ class PasswordHandShake:
         self.iv = None
         self.salt = None
 
-    def send_handshake(self):
+    def generate_handshake(self):
         self.iv = generate_iv()
         return create_hsub(self.password, self.iv)
 
-    def receive_handshake(self, password):
-        if match_hsub(password, self.password):
-            self.salt = bytes(a ^ b for (a, b) in
-                              zip(self.iv, iv_from_hsub(password)))
+    def receive_handshake(self, shake):
+        self.salt = bytes(a ^ b for (a, b) in
+                          zip(self.iv, iv_from_hsub(shake)))
+
+    def receive_and_verify(self, shake):
+        if self.verify(shake):
+            self.receive_handshake(shake)
+            return True
+        return False
+
+    def verify(self, shake):
+        if match_hsub(shake, self.password):
             return True
         return False
 
