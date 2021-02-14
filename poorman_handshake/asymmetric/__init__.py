@@ -1,5 +1,5 @@
 from os.path import isfile
-from poorman_handshake.assymetric.utils import *
+from poorman_handshake.asymmetric.utils import *
 
 
 class HandShake:
