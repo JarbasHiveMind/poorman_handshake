@@ -1,9 +1,11 @@
+import os
 import pgpy
 from pgpy.constants import *
 from datetime import datetime, timedelta
 
 
 def export_private_key(path, key=None, binary=False, *args, **kwargs):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     key = key or create_private_key(*args, **kwargs)
     if binary:
         with open(path, "wb") as f:
