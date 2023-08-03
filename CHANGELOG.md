@@ -1,5 +1,9 @@
 # Changelog
 
+## [V0.2.2a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/V0.2.2a2) (2023-08-03)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/0.2.0...V0.2.2a2)
+
 ## [0.2.0](https://github.com/JarbasHiveMind/poorman_handshake/tree/0.2.0) (2021-02-14)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/5314fd298768286eda26e13382281a62926579be...0.2.0)
