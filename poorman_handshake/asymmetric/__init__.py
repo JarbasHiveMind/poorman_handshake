@@ -1,7 +1,7 @@
 import os
 from binascii import hexlify, unhexlify
 from os.path import isfile
-from typing import Union
+from typing import Union, Optional
 
 import logging
 import shutil
@@ -91,7 +91,7 @@ class HandShake:
             return None
         return self.private_key.public_key().export_key(format="PEM").decode("utf-8")
 
-    def generate_handshake(self, pub: str = None) -> str:
+    def generate_handshake(self, pub: Optional[Union[str, bytes, RSA.RsaKey]]  = None) -> str:
         """
         Generates a handshake message encrypted with the target's public key.
 
@@ -107,14 +107,17 @@ class HandShake:
         signature = sign_RSA(self.private_key, ciphertext)  # Sign the ciphertext
         return hexlify(signature + ciphertext).decode("utf-8")
 
-    def load_public(self, pub: str):
+    def load_public(self, pub: Union[str, bytes, RSA.RsaKey]):
         """
         Loads the target's public RSA key.
 
         Args:
             pub (str): Public key in PEM format.
         """
-        self.target_key = RSA.import_key(pub)
+        if isinstance(pub, RSA.RsaKey):
+            self.target_key = pub
+        else:
+            self.target_key = RSA.import_key(pub)
 
     def receive_handshake(self, shake: Union[str, bytes]):
         """
@@ -149,7 +152,8 @@ class HandShake:
         ciphertext = ciphertext[signature_size:]
         return verify_RSA(pub, ciphertext, signature)
 
-    def receive_and_verify(self, shake: Union[str, bytes], pub: str = None):
+    def receive_and_verify(self, shake: Union[str, bytes],
+                           pub: Optional[Union[str, bytes, RSA.RsaKey]] = None):
         """
         Verifies and processes a handshake message.
 
@@ -167,7 +171,7 @@ class HalfHandShake(HandShake):
     A simpler handshake implementation where the shared secret is directly decrypted.
     """
 
-    def receive_handshake(self, shake: bytes):
+    def receive_handshake(self, shake: Union[str, bytes]):
         """
         Processes a received handshake message to decrypt the shared secret.
 
