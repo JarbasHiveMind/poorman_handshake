@@ -30,6 +30,7 @@ def export_private_key(path, key=None):
     logging.warning(
         "export_private_key is deprecated and will be removed in a future version. Use export_RSA_key instead."
     )
+    key = key or RSA.generate(2048)
     export_RSA_key(key, path)
 
 
