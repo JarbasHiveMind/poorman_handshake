@@ -1,1 +1,1 @@
-PGPy
+pycryptodomex

@@ -1,94 +1,161 @@
+from binascii import hexlify, unhexlify
 from os.path import isfile
-from poorman_handshake.asymmetric.utils import *
+from typing import Union
+
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Random import get_random_bytes
+
+from poorman_handshake.asymmetric.utils import (
+    load_RSA_key,
+    export_RSA_key,
+    decrypt_RSA,
+    encrypt_RSA,
+    sign_RSA,
+    verify_RSA,
+)
 
 
 class HandShake:
-    def __init__(self, path=None, expires=None):
-        if path:
-            if path.endswith(".asc") or path.endswith(".txt"):
-                binary = False
-            else:
-                binary = True
+    """
+    Class for performing a secure handshake using RSA encryption and signatures.
+
+    Attributes:
+        private_key (RSA.RsaKey): The private RSA key for this handshake instance.
+        target_key (RSA.RsaKey): The public key of the target for the handshake.
+        secret (bytes): The shared secret generated during the handshake.
+    """
+
+    def __init__(self, path: str = None, key_size: int = 2048):
+        """
+        Initializes the HandShake instance.
+
+        Args:
+            path (str, optional): Path to load or save the private key.
+            key_size (int, optional): Size of the RSA key in bits (default is 2048).
+        """
         if path and isfile(path):
-            self.load_private(path, binary=binary)
+            self.load_private(path)
         else:
-            self.private_key = create_private_key(expires=expires)
+            self.private_key = RSA.generate(key_size)
             if path:
-                self.export_private_key(path, binary)
+                self.export_private_key(path)
         self.target_key = None
         self.secret = None
 
-    def load_private(self, path, binary=False):
-        if binary:
-            with open(path, "rb") as f:
-                key_blob = f.read()
-        else:
-            with open(path, "r") as f:
-                key_blob = f.read()
-        self.private_key = self.import_key(key_blob)
+    def load_private(self, path: str):
+        """
+        Loads the private RSA key from a file.
 
-    def export_private_key(self, path, binary=False):
-        return export_private_key(path, self.private_key, binary)
+        Args:
+            path (str): Path to the private key file.
+        """
+        self.private_key = load_RSA_key(path)
+
+    def export_private_key(self, path: str):
+        """
+        Exports the private RSA key to a file.
+
+        Args:
+            path (str): Path to save the private key.
+        """
+        secret = self.private_key.export_key(format="PEM")
+        export_RSA_key(secret, path)
 
     @property
-    def pubkey(self):
+    def pubkey(self) -> str:
+        """
+        Returns the public key as a PEM-encoded string.
+
+        Returns:
+            str: PEM-encoded public key.
+        """
         if not self.private_key:
             return None
-        return str(self.private_key.pubkey)
+        return self.private_key.public_key().export_key(format="PEM").decode("utf-8")
 
-    @staticmethod
-    def import_key(key_blob):
-        pubkey, _ = pgpy.PGPKey.from_blob(key_blob)
-        return pubkey
+    def generate_handshake(self, pub: str = None) -> str:
+        """
+        Generates a handshake message encrypted with the target's public key.
 
-    def generate_handshake(self, pub=None):
+        Args:
+            pub (str, optional): Public key of the recipient in PEM format.
+
+        Returns:
+            bytes: Hex-encoded handshake message (signature + ciphertext).
+        """
+        pubkey = pub or self.target_key
+        self.secret = get_random_bytes(32)  # Generate a new shared secret
+        ciphertext = encrypt_RSA(pubkey, self.secret)  # Encrypt the secret
+        signature = sign_RSA(self.private_key, ciphertext)  # Sign the ciphertext
+        return hexlify(signature + ciphertext).decode("utf-8")
+
+    def load_public(self, pub: str):
+        """
+        Loads the target's public RSA key.
+
+        Args:
+            pub (str): Public key in PEM format.
+        """
+        self.target_key = RSA.import_key(pub)
+
+    def receive_handshake(self, shake: Union[str, bytes]):
+        """
+        Processes a received handshake message to decrypt the shared secret.
+
+        Args:
+            shake (bytes): Hex-encoded handshake message (signature + ciphertext).
+        """
+        signature_size = self.private_key.size_in_bytes()
+        ciphertext = unhexlify(shake)[signature_size:]  # Drop the signature
+        decrypted = decrypt_RSA(self.private_key, ciphertext)
+        # XOR the received secret with the existing one
+        self.secret = bytes(a ^ b for a, b in zip(self.secret, decrypted))
+
+    def verify(self, shake: Union[str, bytes], pub: Union[str, bytes, RSA.RsaKey]) -> bool:
+        """
+        Verifies the signature in a handshake message.
+
+        Args:
+            shake (bytes): Hex-encoded handshake message (signature + ciphertext).
+            pub (str): Public key in PEM format of the sender.
+
+        Returns:
+            bool: True if the signature is valid, False otherwise.
+        """
+        if isinstance(pub, RSA.RsaKey):
+            signature_size = pub.size_in_bytes()
+        else:
+            signature_size = RSA.import_key(pub).size_in_bytes()
+        ciphertext = unhexlify(shake)
+        signature = ciphertext[:signature_size]
+        ciphertext = ciphertext[signature_size:]
+        return verify_RSA(pub, ciphertext, signature)
+
+    def receive_and_verify(self, shake: Union[str, bytes], pub: str = None):
+        """
+        Verifies and processes a handshake message.
+
+        Args:
+            shake (bytes): Hex-encoded handshake message (signature + ciphertext).
+            pub (str, optional): Public key in PEM format of the sender.
+        """
         pub = pub or self.target_key
-        # read pubkey from client
-        pubkey = self.import_key(pub)
-        # generate new key
-        self.secret = SymmetricKeyAlgorithm.AES256.gen_key()
-        text_message = pgpy.PGPMessage.new(self.secret)
-        # encrypt generated key
-        encrypted_message = pubkey.encrypt(text_message)
-        # sign message
-        # the bitwise OR operator '|' is used to add a signature to a PGPMessage.
-        encrypted_message |= self.private_key.sign(encrypted_message,
-                                                   intended_recipients=[pubkey])
-        return str(encrypted_message)
-
-    def load_public(self, pub):
-        self.target_key = pub
-
-    def receive_handshake(self, shake):
-        message_from_blob = pgpy.PGPMessage.from_blob(shake)
-        decrypted = self.private_key.decrypt(message_from_blob)
-        # XOR
-        self.secret = bytes(a ^ b for (a, b) in
-                            zip(self.secret, decrypted.message))
-
-    def verify(self, shake, pub):
-        message = pgpy.PGPMessage.from_blob(shake)
-        pubkey = self.import_key(pub)
-        return pubkey.verify(message)
-
-    def receive_and_verify(self, shake, pub=None):
-        pub = pub or self.target_key
-        verified = self.verify(shake, pub)
-        if verified:
+        if self.verify(shake, pub):
             self.receive_handshake(shake)
 
 
 class HalfHandShake(HandShake):
+    """
+    A simpler handshake implementation where the shared secret is directly decrypted.
+    """
 
-    def generate_handshake(self, pub=None):
-        enc = super().generate_handshake(pub)
-        self.secret = bytes(self.secret)
-        return enc
+    def receive_handshake(self, shake: bytes):
+        """
+        Processes a received handshake message to decrypt the shared secret.
 
-    def receive_handshake(self, shake):
-        message_from_blob = pgpy.PGPMessage.from_blob(shake)
-        decrypted = self.private_key.decrypt(message_from_blob)
-        # XOR
-        self.secret = bytes(decrypted.message)
-
-
+        Args:
+            shake (bytes): Hex-encoded handshake message (signature + ciphertext).
+        """
+        signature_size = self.private_key.size_in_bytes()
+        ciphertext = unhexlify(shake)[signature_size:]  # Drop the signature
+        self.secret = decrypt_RSA(self.private_key, ciphertext)

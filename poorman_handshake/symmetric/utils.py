@@ -1,13 +1,10 @@
-from hashlib import sha256
-import string
-import random
+from Cryptodome.Hash import SHA256
+from Cryptodome.Random import get_random_bytes
 
 
-# TODO os.urandom
-def generate_iv(key_lenght=8):
+def generate_iv(key_length=8):
     """Generate a random string of letters and digits """
-    valid_chars = string.ascii_letters + string.digits
-    return ''.join(random.choice(valid_chars) for i in range(key_lenght)).encode("utf-8")
+    return get_random_bytes(key_length)
 
 
 def create_hsub(text, iv=None, hsublen=48):
@@ -18,7 +15,7 @@ def create_hsub(text, iv=None, hsublen=48):
     # Generate a 64bit random IV if none is provided.
     if iv is None:
         iv = generate_iv()
-    hashed = sha256(iv + text.encode("utf-8")).digest()
+    hashed = SHA256.new(iv + text.encode("utf-8")).digest()
     # Concatenate our IV with a SHA256 hash of text + IV.
     hsub = iv + hashed
     return hsub.hex()[:hsublen]

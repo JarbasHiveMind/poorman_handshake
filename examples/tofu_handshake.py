@@ -38,7 +38,7 @@ def do_the_shake(alice, bob):
     bob.receive_and_verify(alice_shake)
     alice.receive_and_verify(bob_shake)
 
-    print("Success", bob.secret)
+    print("Success", bob.secret.hex())
 
 
 do_the_shake(alice, bob)  # trust established
