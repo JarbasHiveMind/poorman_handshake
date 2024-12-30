@@ -1,9 +1,63 @@
+import logging
+import os
+import warnings
 from typing import Tuple, Union
 
 from Cryptodome.Cipher import PKCS1_OAEP
 from Cryptodome.Hash import SHA256
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import pss
+
+
+def export_private_key(path, key=None):
+    """
+    Deprecated function for exporting an RSA private key.
+    Logs a deprecation warning and redirects to export_RSA_key.
+
+    Args:
+        path (str): File path to save the key.
+        key: The RSA private key.
+
+    Returns:
+        None
+    """
+    warnings.warn(
+        "export_private_key is deprecated and will be removed in a future version. "
+        "Use export_RSA_key instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    logging.warning(
+        "export_private_key is deprecated and will be removed in a future version. Use export_RSA_key instead."
+    )
+    export_RSA_key(key, path)
+
+
+def create_private_key(name="PoorManHandshake", expires=None):
+    """
+    Deprecated function for creating an RSA private key.
+    Logs a deprecation warning and creates a new RSA key.
+
+    Args:
+        name (str): Unused parameter for naming the key.
+        expires: Unused parameter for key expiration.
+
+    Returns:
+        RSA.RsaKey: The generated RSA private key.
+    """
+    warnings.warn(
+        "create_private_key is deprecated and will be removed in a future version. "
+        "Use create_RSA_key instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    logging.warning(
+        "create_private_key is deprecated and will be removed in a future version. Use create_RSA_key instead."
+    )
+    k = RSA.generate(2048)
+    # add property that NodeIdentity expects for compat
+    k.pubkey = k.public_key().export_key(format="PEM").decode("utf-8")
+    return k
 
 
 def export_RSA_key(key: Union[str, bytes, RSA.RsaKey], path: str):
@@ -17,6 +71,9 @@ def export_RSA_key(key: Union[str, bytes, RSA.RsaKey], path: str):
     Returns:
         None
     """
+    base = os.path.dirname(path)
+    if base:
+        os.makedirs(base, exist_ok=True)
     if isinstance(key, RSA.RsaKey):
         key = key.export_key(format="PEM")
     if isinstance(key, str):
