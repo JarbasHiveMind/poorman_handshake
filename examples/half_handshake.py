@@ -23,7 +23,7 @@ def do_the_shake(alice, bob):
     # read and verify handshakes
     alice.receive_and_verify(bob_shake)
 
-    print("Success", alice.secret)
+    print("Success", alice.secret.hex())
     assert alice.secret == bob.secret
 
 
