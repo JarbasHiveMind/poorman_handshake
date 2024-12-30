@@ -6,7 +6,6 @@ BASEDIR = os.path.abspath(os.path.dirname(__file__))
 
 def get_version():
     """ Find the version of the package"""
-    version = None
     version_file = os.path.join(BASEDIR, 'poorman_handshake', 'version.py')
     major, minor, build, alpha = (None, None, None, None)
     with open(version_file) as f:
@@ -50,6 +49,7 @@ setup(
     license='Apache-2.0',
     author='jarbasAi',
     install_requires=required("requirements.txt"),
+    include_package_data=True,
     author_email='jarbasai@mailfence.com',
     description='poor man\'s key exchange, powered by RSA'
 )
