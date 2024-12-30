@@ -3,6 +3,7 @@ from binascii import hexlify, unhexlify
 from os.path import isfile
 from typing import Union
 
+import logging
 import shutil
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
@@ -37,12 +38,20 @@ class HandShake:
         """
         self.private_key = None
         if path and isfile(path):
+
             try:
                 self.load_private(path)
             except ValueError:
-                shutil.copy(path, path + ".bak")
-                os.remove(path)
-                print(f"file does not look like a valid RSA key, regenerating '{path}'")
+                try:
+                    backup_path = path + ".bak"
+                    shutil.copy2(path, backup_path)
+                    os.remove(path)
+                    logging.warning(
+                        f"Invalid RSA key format in '{path}'. "
+                        f"Created backup at '{backup_path}' and will generate new key."
+                    )
+                except Exception as e:
+                    raise ValueError(f"Failed to handle invalid key file: {e}")
 
         if not self.private_key:
             self.private_key = RSA.generate(key_size)
