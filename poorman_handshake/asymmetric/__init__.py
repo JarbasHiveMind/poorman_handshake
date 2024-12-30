@@ -34,7 +34,11 @@ class HandShake:
             key_size (int, optional): Size of the RSA key in bits (default is 2048).
         """
         if path and isfile(path):
-            self.load_private(path)
+            try:
+                self.load_private(path)
+            except ValueError:
+                print(f"file does not look like a valid RSA key, please delete it and try again. '{path}'")
+                raise
         else:
             self.private_key = RSA.generate(key_size)
             if path:
