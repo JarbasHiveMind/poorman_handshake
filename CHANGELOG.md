@@ -1,20 +1,12 @@
 # Changelog
 
-## [0.2.2a4](https://github.com/JarbasHiveMind/poorman_handshake/tree/0.2.2a4) (2024-12-30)
+## [1.0.2a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a1) (2025-12-18)
 
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/V0.2.2a3...0.2.2a4)
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.1...1.0.2a1)
 
 **Merged pull requests:**
 
-- refactor!: use RSA directly, drop PGPy [\#1](https://github.com/JarbasHiveMind/poorman_handshake/pull/1) ([JarbasAl](https://github.com/JarbasAl))
-
-## [V0.2.2a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/V0.2.2a3) (2023-08-03)
-
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/V0.2.2a2...V0.2.2a3)
-
-## [V0.2.2a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/V0.2.2a2) (2023-08-03)
-
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/0.2.0...V0.2.2a2)
+- Configure Renovate [\#3](https://github.com/JarbasHiveMind/poorman_handshake/pull/3) ([renovate[bot]](https://github.com/apps/renovate))
 
 
 
