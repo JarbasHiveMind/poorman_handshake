@@ -204,6 +204,89 @@ def verify_RSA(public_key: Union[str, bytes, RSA.RsaKey], message: Union[str, by
         return False
 
 
+def hybrid_encrypt_RSA(public_key: Union[str, bytes, RSA.RsaKey],
+                       plaintext: Union[str, bytes]) -> bytes:
+    """Encrypt arbitrary-length plaintext using RSA + AES-GCM hybrid scheme.
+
+    Generates a random 256-bit AES key, encrypts the plaintext with
+    AES-GCM, then RSA-OAEP encrypts the AES key. The output is a single
+    bytestring: ``rsa_ciphertext_len (2 bytes big-endian) ||
+    rsa_ciphertext || nonce (16 bytes) || tag (16 bytes) || aes_ciphertext``.
+
+    This removes the RSA plaintext size limit — only the 32-byte AES key
+    is RSA-encrypted, while the payload uses AES-GCM with no size cap.
+
+    Args:
+        public_key: RSA public key (PEM string, bytes, or RsaKey).
+        plaintext: The data to encrypt (string or bytes).
+
+    Returns:
+        The hybrid ciphertext as a single bytes object.
+    """
+    from Cryptodome.Cipher import AES
+
+    if isinstance(public_key, RSA.RsaKey):
+        key = public_key
+    else:
+        key = RSA.import_key(public_key)
+    if isinstance(plaintext, str):
+        plaintext = plaintext.encode("utf-8")
+
+    # Generate random AES-256 key and encrypt the plaintext
+    aes_key = os.urandom(32)
+    aes_cipher = AES.new(aes_key, AES.MODE_GCM, nonce=os.urandom(16))
+    aes_ciphertext, tag = aes_cipher.encrypt_and_digest(plaintext)
+
+    # RSA-encrypt only the 32-byte AES key
+    rsa_cipher = PKCS1_OAEP.new(key)
+    rsa_ciphertext = rsa_cipher.encrypt(aes_key)
+
+    # Pack: rsa_len (2B) || rsa_ciphertext || nonce (16B) || tag (16B) || aes_ciphertext
+    rsa_len = len(rsa_ciphertext)
+    return (rsa_len.to_bytes(2, "big") + rsa_ciphertext +
+            aes_cipher.nonce + tag + aes_ciphertext)
+
+
+def hybrid_decrypt_RSA(secret_key: Union[str, bytes, RSA.RsaKey],
+                       ciphertext: bytes) -> bytes:
+    """Decrypt data produced by :func:`hybrid_encrypt_RSA`.
+
+    Extracts the RSA-encrypted AES key, decrypts it with the RSA private
+    key, then uses the AES key to decrypt the payload via AES-GCM.
+
+    Args:
+        secret_key: RSA private key (PEM path, bytes, or RsaKey).
+        ciphertext: The hybrid ciphertext produced by hybrid_encrypt_RSA.
+
+    Returns:
+        The decrypted plaintext as bytes.
+
+    Raises:
+        ValueError: If the ciphertext is malformed or tampered with.
+    """
+    from Cryptodome.Cipher import AES
+
+    if isinstance(secret_key, RSA.RsaKey):
+        key = secret_key
+    else:
+        key = RSA.import_key(secret_key)
+
+    # Unpack: rsa_len (2B) || rsa_ciphertext || nonce (16B) || tag (16B) || aes_ciphertext
+    rsa_len = int.from_bytes(ciphertext[:2], "big")
+    rsa_ciphertext = ciphertext[2:2 + rsa_len]
+    nonce = ciphertext[2 + rsa_len:2 + rsa_len + 16]
+    tag = ciphertext[2 + rsa_len + 16:2 + rsa_len + 32]
+    aes_ciphertext = ciphertext[2 + rsa_len + 32:]
+
+    # Decrypt AES key with RSA
+    rsa_cipher = PKCS1_OAEP.new(key)
+    aes_key = rsa_cipher.decrypt(rsa_ciphertext)
+
+    # Decrypt payload with AES-GCM
+    aes_cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
+    return aes_cipher.decrypt_and_verify(aes_ciphertext, tag)
+
+
 if __name__ == "__main__":
     pub, sec = create_RSA_key()
     m = "attack at dawn"
