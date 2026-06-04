@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a2) (2026-06-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a1...1.0.2a2)
+
+**Merged pull requests:**
+
+- Add README, CI workflows, and unit tests [\#9](https://github.com/JarbasHiveMind/poorman_handshake/pull/9) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.2a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a1) (2025-12-18)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.1...1.0.2a1)
