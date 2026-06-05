@@ -76,24 +76,26 @@ print(f"Shared secret: {alice.secret.hex()}")
 
 ### One-way handshake (asymmetric trust)
 
-`HalfHandShake` derives the secret directly without XOR, for scenarios where only one party's contribution matters:
+`HalfHandShake` derives the secret directly without XOR, for scenarios where only one party's contribution matters. The sender chooses the secret and encrypts it with the receiver's public key; the receiver authenticates the sender and decrypts the secret. Only the receiver needs the sender's public key in advance:
 
 ```python
 from poorman_handshake import HalfHandShake
+from secrets import compare_digest
 
-server = HalfHandShake()
-client = HalfHandShake()
+sender = HalfHandShake()
+receiver = HalfHandShake()
 
-client.load_public(server.pubkey)
+# The receiver holds the sender's public key (exchanged securely beforehand)
+receiver.load_public(sender.pubkey)
 
-# Client generates handshake
-client_shake = client.generate_handshake()
+# The sender encrypts its secret with the receiver's public key
+sender_shake = sender.generate_handshake(receiver.pubkey)
 
-# Server receives and derives the client's secret directly
-server.receive_and_verify(client_shake)
+# The receiver verifies the sender's signature and decrypts the secret
+receiver.receive_and_verify(sender_shake)
 
-# Both hold the same key (derived from client's secret only)
-assert compare_digest(server.secret, client.secret)
+# Both hold the same key (chosen by the sender)
+assert compare_digest(receiver.secret, sender.secret)
 ```
 
 ## API Reference
@@ -163,9 +165,9 @@ Low-level RSA operations in `poorman_handshake.asymmetric.utils`:
 Low-level PAKE operations in `poorman_handshake.symmetric.utils`:
 
 - `generate_iv(key_length=8) -> bytes`: Generate a random 64-bit IV.
-- `create_hsub(password, iv=None, hsublen=48) -> str`: Create a hex-encoded hashed subject (hsub).
-- `match_hsub(hsub, password) -> bool`: Verify an hsub against a password.
-- `iv_from_hsub(hsub) -> bytes`: Extract IV from an hsub.
+- `create_hsub(text, iv=None, hsublen=48) -> str`: Create a hex-encoded hashed subject (hsub) from the shared secret `text`.
+- `match_hsub(hsub, subject) -> bool`: Verify an hsub against the shared secret `subject`.
+- `iv_from_hsub(hsub, digits=16) -> bytes`: Extract the IV from an hsub.
 
 ## Examples
 
@@ -176,6 +178,12 @@ See the [examples](./examples) folder for additional use cases:
 - `half_handshake.py`: One-way key agreement.
 - `poor_pake.py`: Password-based key exchange.
 - `*_mitm.py` demos: Man-in-the-middle attack illustrations.
+
+## Deeper reference
+
+[`docs/protocol.md`](./docs/protocol.md) walks through how each variant derives
+its shared secret, the TOFU and pre-distributed-key trust models, the low-level
+RSA helpers, and where the handshake fits in the HiveMind connection flow.
 
 ## Security Notes
 
