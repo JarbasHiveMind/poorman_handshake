@@ -1,11 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/JarbasHiveMind/poorman_handshake/tree/HEAD)
+## [1.0.2a5](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a5) (2026-06-20)
 
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a3...HEAD)
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a3...1.0.2a5)
 
 **Merged pull requests:**
 
+- ci: modernize publish workflows \(drop setup.py build\) [\#15](https://github.com/JarbasHiveMind/poorman_handshake/pull/15) ([JarbasAl](https://github.com/JarbasAl))
 - build: migrate setup.py → pyproject.toml [\#14](https://github.com/JarbasHiveMind/poorman_handshake/pull/14) ([JarbasAl](https://github.com/JarbasAl))
 
 ## [1.0.2a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a3) (2026-06-05)
