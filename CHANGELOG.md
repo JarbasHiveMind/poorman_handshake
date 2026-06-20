@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/JarbasHiveMind/poorman_handshake/tree/HEAD)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a3...HEAD)
+
+**Merged pull requests:**
+
+- build: migrate setup.py → pyproject.toml [\#14](https://github.com/JarbasHiveMind/poorman_handshake/pull/14) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.2a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a3) (2026-06-05)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a2...1.0.2a3)
