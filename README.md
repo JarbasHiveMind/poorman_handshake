@@ -1,10 +1,13 @@
 # Poor Man's Handshake
 
-Securely exchange symmetric encryption keys over insecure channels using either password-based or RSA public-key handshakes. This library provides the cryptographic bootstrap primitive for the HiveMind distributed mesh — nodes use it to establish a shared session secret before raising an encrypted channel.
+Securely exchange symmetric encryption keys over insecure channels using a Noise-framework handshake or the legacy password / RSA handshakes. This library provides the cryptographic bootstrap primitive for the HiveMind distributed mesh — nodes use it to establish a shared session secret before raising an encrypted channel.
+
+> **Which handshake should I use?** The **Noise handshake** (`NoiseHandShake`) is the recommended path: it adds forward secrecy, PAKE-grade password authentication (no offline-crackable image on the wire), replay resistance, and downgrade protection that the password and RSA handshakes lack. The legacy handshakes remain for interoperability with existing deployments. See [`docs/security.md`](docs/security.md) for the full analysis of why.
 
 ## Features
 
-- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256.
+- **Noise handshake** (`NoiseHandShake`): A [Noise Protocol Framework](https://noiseprotocol.org/) authenticated key exchange (`Noise_XXpsk2` / `Noise_KKpsk0` over X25519 + ChaCha20-Poly1305 + SHA-256). The shared password enters as the Noise PSK — never as an on-wire image — and session keys come from an ephemeral X25519 exchange, giving **forward secrecy**, **PAKE-grade** password authentication, per-message **replay resistance**, and prologue-bound **downgrade protection**. Static keys are learned during `XX` for trust-on-first-use pinning. This is HiveMind protocol v3.
+- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256. Note: the on-wire verifier is an offline-crackable image of the password (safe only with a high-entropy secret) — prefer `NoiseHandShake`.
 - **RSA public-key exchange** (`HandShake`): Mutual RSA key agreement where both parties contribute a random secret. The secrets are XORed to form the final shared key, ensuring both contributions are needed.
 - **Asymmetric exchange** (`HalfHandShake`): One-way key agreement for asymmetric trust scenarios (only one party's secret is used).
 - **Hybrid RSA+AES-GCM encryption**: Arbitrary-length plaintext support via RSA-encrypted AES keys.
@@ -16,9 +19,40 @@ Securely exchange symmetric encryption keys over insecure channels using either 
 pip install poorman_handshake
 ```
 
-Requires Python 3.10+ and `pycryptodomex >= 3.19.1`.
+Requires Python 3.10+, `pycryptodomex >= 3.19.1`, `noiseprotocol >= 0.3.1`, and `argon2-cffi >= 21.3.0` (all installed automatically).
 
 ## Quick Start
+
+### Noise handshake (recommended)
+
+Both peers share a site *password*; the connecting node initiates. The default
+`XXpsk2` pattern needs no prior knowledge of the peer's static key — each side
+learns and can pin it during the exchange.
+
+```python
+from poorman_handshake.noise import NoiseHandShake
+
+# alice = connecting node (initiator); bob = server (responder).
+# node_id is the server's id, used as the PSK derivation salt.
+alice = NoiseHandShake(initiator=True, password="site-password", node_id="server-01")
+bob = NoiseHandShake(initiator=False, password="site-password", node_id="server-01")
+
+# XXpsk2 is three messages, exchanged over any insecure channel (no TLS needed):
+bob.read_message(alice.write_message())    # msg 1: e
+alice.read_message(bob.write_message())    # msg 2: e, ee, s, es, psk
+bob.read_message(alice.write_message())    # msg 3: s, se
+
+assert alice.handshake_finished and bob.handshake_finished
+assert alice.remote_pubkey == bob.pubkey_bytes   # learned static key — pin it (TOFU)
+
+# Encrypted session: per-message counter nonces make replays fail to decrypt.
+ciphertext = alice.encrypt(b"hello over the mesh")
+assert bob.decrypt(ciphertext) == b"hello over the mesh"
+```
+
+Pre-provisioned peers (both static keys known in advance) select the two-message
+`KKpsk0` pattern automatically by passing `remote_pubkey=`. See
+[`examples/noise_kk.py`](examples/noise_kk.py).
 
 ### Password-based handshake
 
@@ -100,9 +134,51 @@ assert compare_digest(receiver.secret, sender.secret)
 
 ## API Reference
 
+### `NoiseHandShake`
+
+Noise-framework authenticated key exchange (HiveMind protocol v3). Recommended.
+
+**Constructor:**
+```python
+NoiseHandShake(
+    initiator: bool,
+    path: str = None,
+    password: str | bytes = None,
+    node_id: str | bytes = None,
+    psk: bytes = None,
+    remote_pubkey: str | bytes = None,
+    prologue: bytes = b"",
+    pattern: bytes = None,
+)
+```
+- `initiator`: `True` for the connecting side, `False` for the responder.
+- `path`: Optional file to load/persist the static X25519 key (generated if absent).
+- `password` / `node_id`: Shared password, stretched into the 32-byte PSK with argon2id salted by `SHA-256(node_id)`. Provide either this pair or `psk`.
+- `psk`: A pre-derived 32-byte pre-shared key (alternative to `password`).
+- `remote_pubkey`: Peer static public key (hex or 32 raw bytes). Supplying it selects `KKpsk0`; omitting it uses `XXpsk2` (learn-and-pin).
+- `prologue`: Bytes bound into the handshake hash for downgrade protection; both sides must supply identical bytes. Encode the negotiated protocol version and cipher/encoding lists here.
+- `pattern`: Override the Noise protocol name (defaults per `remote_pubkey`).
+
+**Methods:**
+- `write_message(payload: bytes = b"") -> bytes`: Produce the next handshake message (or, once finished, a transport message).
+- `read_message(data: bytes) -> bytes`: Consume the peer's next message.
+- `split() -> (send, recv)`: The two transport `CipherState`s after the handshake.
+- `encrypt(data: bytes) -> bytes` / `decrypt(data: bytes) -> bytes`: Transport encryption using the split CipherStates (per-message counter nonces → replay resistant).
+- `load_private(path)` / `export_private_key(path)`: Static-key persistence.
+
+**Properties:**
+- `handshake_finished: bool`: Whether the handshake is complete.
+- `pubkey: str` / `pubkey_bytes: bytes`: This node's static public key.
+- `remote_pubkey: bytes | None`: The peer's static public key (learned during `XX`); pin it for TOFU.
+- `handshake_hash: bytes | None`: Shared transcript fingerprint for channel binding.
+
+### `derive_psk(password, node_id=None, salt=None) -> bytes`
+
+Derive a 32-byte Noise PSK from a password using argon2id. The salt defaults to `SHA-256(node_id)` (per HIVEMIND-CRYPTO-1) when `node_id` is given. Both peers must derive with identical inputs.
+
 ### `PasswordHandShake`
 
-Password-based authenticated key agreement (PAKE-like).
+Password-based key agreement. **Not a PAKE** — the handshake transmits a salted-hash *verifier* of the password, which a passive observer can attack offline; it is safe only with a high-entropy shared secret. For a low-entropy password, use `NoiseHandShake` instead (see [`docs/security.md`](docs/security.md)).
 
 **Constructor:**
 ```python
@@ -172,6 +248,8 @@ Low-level PAKE operations in `poorman_handshake.symmetric.utils`:
 ## Examples
 
 See the [examples](./examples) folder for additional use cases:
+- `noise_handshake.py`: Noise `XXpsk2` password handshake with TOFU key learning (**recommended**).
+- `noise_kk.py`: Noise `KKpsk0` handshake with pre-provisioned static keys.
 - `simple_handshake.py`: Basic RSA handshake.
 - `static_handshake.py`: Persistent key file handshake.
 - `tofu_handshake.py`: Trust-on-first-use (TOFU) key pinning.
@@ -185,13 +263,19 @@ See the [examples](./examples) folder for additional use cases:
 its shared secret, the TOFU and pre-distributed-key trust models, the low-level
 RSA helpers, and where the handshake fits in the HiveMind connection flow.
 
+[`docs/security.md`](./docs/security.md) is the threat-model analysis: what each
+construction protects against and what it does not, why the password and RSA
+handshakes are safe in their origin but weak as a standalone live-link exchange,
+and how the Noise handshake supplies the missing properties (offline-attack
+resistance, forward secrecy, MITM resistance, transcript binding).
+
 ## Security Notes
 
-This library is a **proof-of-concept for HiveMind's key bootstrap**. For production use in security-critical applications:
-- Review cryptographic assumptions (PBKDF2 iteration count, RSA key size, OAEP/PSS parameters).
+The **Noise handshake** (`NoiseHandShake`) is the recommended path and provides forward secrecy, PAKE-grade password authentication, replay resistance, and downgrade protection out of the box. The legacy password and RSA handshakes remain for interoperability; when using them in security-critical applications:
+- Prefer a high-entropy shared secret — the password verifier is offline-crackable (see [`docs/security.md`](./docs/security.md)).
 - Ensure channel integrity after handshake (the derived secret should be used with authenticated encryption like AES-GCM or ChaCha20-Poly1305).
 - Validate out-of-band public key distribution (TOFU, PKI, or other models).
-- Consider forward secrecy mechanisms if long-lived keys are at risk.
+- The RSA path has no forward secrecy — a later key compromise decrypts past sessions; use `NoiseHandShake` where that matters.
 
 ## License
 
