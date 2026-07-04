@@ -15,8 +15,16 @@ password path below.
 
 ## Symmetric path — `PasswordHandShake`
 
-A PAKE-style exchange: both parties already share a password and want a
-symmetric key without ever sending the password over the wire.
+Both parties already share a password and derive a symmetric key without ever
+sending the password over the wire. This is Usenet **hSub** (hashed-subject)
+addressing repurposed as a key-confirmation step.
+
+> **It is not a PAKE, despite the shape.** A checkable image of the password
+> (`SHA256(IV ‖ password)`, IV public) travels on the wire, so a passive
+> observer can mount an **offline dictionary attack** against a weak password.
+> Use a high-entropy access key here, and read [`security.md`](security.md)
+> before relying on this path — it is a worked example of why the distinction
+> matters.
 
 1. Each party generates a random 64-bit IV (`generate_iv`).
 2. Each derives a **hsub** (hashed subject) binding the IV to the password
@@ -117,6 +125,11 @@ built from, usable directly for ad-hoc encryption or signing:
 
 This library is the bootstrap primitive, not a full secure-transport stack.
 The derived `secret` must be used with authenticated encryption (AES-GCM,
-ChaCha20-Poly1305), public-key distribution must be validated out of band, and
-the PBKDF2 iteration count, RSA key size, and OAEP/PSS parameters should be
-reviewed before use outside HiveMind.
+ChaCha20-Poly1305), and public-key distribution must be validated out of band.
+
+Both paths have real limits that shape when they are safe to use: the password
+path is offline-guessable and only safe with a high-entropy key, and the RSA
+path provides **no forward secrecy**. These are analysed in depth — with the
+threat model, the exact attacks, and why they are a cautionary tale about
+composing your own crypto — in [`security.md`](security.md). Read it before
+using either handshake outside its original context.
