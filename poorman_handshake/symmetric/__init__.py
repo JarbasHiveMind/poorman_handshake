@@ -1,4 +1,9 @@
 from poorman_handshake.symmetric.utils import *
+from poorman_handshake.symmetric.strength import (
+    check_password_strength,
+    WeakPasswordError,
+    DEFAULT_MIN_BITS,
+)
 import hashlib
 import warnings
 
@@ -6,12 +11,17 @@ import warnings
 class PasswordHandShake:
     """Password-based key agreement (legacy; **discouraged**).
 
+    Refuses low-entropy, guessable passwords: the constructor raises
+    :class:`WeakPasswordError` unless the password's estimated guess resistance
+    reaches ``min_bits`` (default :data:`DEFAULT_MIN_BITS`). Pass ``min_bits=0``
+    to disable the check.
+
     Not a PAKE — the on-wire verifier is an offline-crackable image of the
     password. Prefer :class:`poorman_handshake.noise.NoiseHandShake`
     (see docs/security.md).
     """
 
-    def __init__(self, password):
+    def __init__(self, password, min_bits: float = DEFAULT_MIN_BITS):
         warnings.warn(
             "PasswordHandShake is not a PAKE: it sends a salted-hash verifier of "
             "the password that a passive observer can attack offline, and it has "
@@ -22,6 +32,7 @@ class PasswordHandShake:
             DeprecationWarning,
             stacklevel=2,
         )
+        check_password_strength(password, min_bits)
         self.password = password
         self.iv = None
         self.salt = None

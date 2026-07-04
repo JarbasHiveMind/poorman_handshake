@@ -19,7 +19,7 @@ Securely exchange symmetric encryption keys over insecure channels using a Noise
 pip install poorman_handshake
 ```
 
-Requires Python 3.10+, `pycryptodomex >= 3.19.1`, `noiseprotocol >= 0.3.1`, and `argon2-cffi >= 21.3.0` (all installed automatically).
+Requires Python 3.10+, `pycryptodomex >= 3.19.1`, `noiseprotocol >= 0.3.1`, `argon2-cffi >= 21.3.0`, and `zxcvbn >= 4.4.28` (for password-strength checking).
 
 ## Quick Start
 
@@ -182,9 +182,12 @@ Password-based key agreement. **Not a PAKE** — the handshake transmits a salte
 
 **Constructor:**
 ```python
-PasswordHandShake(password: str)
+PasswordHandShake(password: str, min_bits: float = 40)
 ```
 - `password`: Pre-shared password string.
+- `min_bits`: Minimum estimated guess resistance (bits, via zxcvbn). The constructor raises `WeakPasswordError` for a weaker password. Pass `min_bits=0` to disable the check (e.g. for a machine-generated high-entropy secret).
+
+> ⚠️ **Breaking:** since the on-wire verifier is offline-crackable, weak passwords are now **refused** by default. Use a strong passphrase, `min_bits=0` to opt out, or prefer `NoiseHandShake`.
 
 **Methods:**
 - `generate_handshake() -> str`: Generate a hex-encoded handshake message (hsub).
