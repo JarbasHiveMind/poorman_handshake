@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a1) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a2...2.0.0a1)
+
+**Breaking changes:**
+
+- feat!: refuse low-entropy guessable passwords in PasswordHandShake [\#20](https://github.com/JarbasHiveMind/poorman_handshake/pull/20) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.1.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a2) (2026-07-04)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a1...1.1.0a2)
