@@ -7,7 +7,7 @@ from poorman_handshake import PasswordHandShake
 def test_password_handshake_generates_handshake():
     """Test that generate_handshake produces a hex string."""
     password = "shared_secret"
-    shake = PasswordHandShake(password)
+    shake = PasswordHandShake(password, min_bits=0)
     handshake = shake.generate_handshake()
 
     assert isinstance(handshake, str)
@@ -22,8 +22,8 @@ def test_password_handshake_generates_handshake():
 def test_password_handshake_mutual_agreement():
     """Test that two parties with the same password derive the same key."""
     password = "Super Secret Pass Phrase"
-    alice = PasswordHandShake(password)
-    bob = PasswordHandShake(password)
+    alice = PasswordHandShake(password, min_bits=0)
+    bob = PasswordHandShake(password, min_bits=0)
 
     # Generate handshakes
     alice_shake = alice.generate_handshake()
@@ -39,8 +39,8 @@ def test_password_handshake_mutual_agreement():
 
 def test_password_handshake_different_passwords():
     """Test that different passwords result in different keys."""
-    alice = PasswordHandShake("password_a")
-    bob = PasswordHandShake("password_b")
+    alice = PasswordHandShake("password_a", min_bits=0)
+    bob = PasswordHandShake("password_b", min_bits=0)
 
     alice_shake = alice.generate_handshake()
     bob_shake = bob.generate_handshake()
@@ -55,30 +55,30 @@ def test_password_handshake_different_passwords():
 def test_password_handshake_verify_correct():
     """Test verify returns True for matching password."""
     password = "test_password"
-    shake = PasswordHandShake(password)
+    shake = PasswordHandShake(password, min_bits=0)
     handshake = shake.generate_handshake()
 
     # Create another instance with same password to verify
-    verifier = PasswordHandShake(password)
+    verifier = PasswordHandShake(password, min_bits=0)
     assert verifier.verify(handshake)
 
 
 def test_password_handshake_verify_incorrect():
     """Test verify returns False for non-matching password."""
     password = "correct_password"
-    shake = PasswordHandShake(password)
+    shake = PasswordHandShake(password, min_bits=0)
     handshake = shake.generate_handshake()
 
     # Try to verify with different password
-    verifier = PasswordHandShake("wrong_password")
+    verifier = PasswordHandShake("wrong_password", min_bits=0)
     assert not verifier.verify(handshake)
 
 
 def test_password_handshake_receive_and_verify():
     """Test receive_and_verify succeeds on correct password."""
     password = "shared"
-    alice = PasswordHandShake(password)
-    bob = PasswordHandShake(password)
+    alice = PasswordHandShake(password, min_bits=0)
+    bob = PasswordHandShake(password, min_bits=0)
 
     alice_shake = alice.generate_handshake()
     bob_shake = bob.generate_handshake()
@@ -91,8 +91,8 @@ def test_password_handshake_receive_and_verify():
 def test_password_handshake_deterministic_secret():
     """Test that the same handshakes always produce the same secret."""
     password = "test"
-    alice = PasswordHandShake(password)
-    bob = PasswordHandShake(password)
+    alice = PasswordHandShake(password, min_bits=0)
+    bob = PasswordHandShake(password, min_bits=0)
 
     alice_shake = alice.generate_handshake()
     bob_shake = bob.generate_handshake()
@@ -111,8 +111,8 @@ def test_password_handshake_deterministic_secret():
 def test_password_handshake_exchange_without_verify():
     """Test plain receive_handshake without verify still derives key."""
     password = "no_verify"
-    alice = PasswordHandShake(password)
-    bob = PasswordHandShake(password)
+    alice = PasswordHandShake(password, min_bits=0)
+    bob = PasswordHandShake(password, min_bits=0)
 
     alice_shake = alice.generate_handshake()
     bob_shake = bob.generate_handshake()

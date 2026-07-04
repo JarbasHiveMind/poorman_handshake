@@ -13,6 +13,7 @@ keywords = ["hivemind", "crypto", "handshake", "rsa", "key-exchange"]
 dynamic = ["version"]
 dependencies = [
     "pycryptodomex>=3.19.1",
+    "zxcvbn>=4.4.28",
     "noiseprotocol>=0.3.1",
     "argon2-cffi>=21.3.0",
 ]

@@ -4,7 +4,7 @@ Securely exchange symmetric encryption keys over insecure channels using either 
 
 ## Features
 
-- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256.
+- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256. Because the on-wire verifier is offline-crackable, the constructor **refuses low-entropy, guessable passwords** (guess resistance estimated with zxcvbn; tune via `min_bits`).
 - **RSA public-key exchange** (`HandShake`): Mutual RSA key agreement where both parties contribute a random secret. The secrets are XORed to form the final shared key, ensuring both contributions are needed.
 - **Asymmetric exchange** (`HalfHandShake`): One-way key agreement for asymmetric trust scenarios (only one party's secret is used).
 - **Hybrid RSA+AES-GCM encryption**: Arbitrary-length plaintext support via RSA-encrypted AES keys.
@@ -16,7 +16,7 @@ Securely exchange symmetric encryption keys over insecure channels using either 
 pip install poorman_handshake
 ```
 
-Requires Python 3.10+ and `pycryptodomex >= 3.19.1`.
+Requires Python 3.10+, `pycryptodomex >= 3.19.1`, and `zxcvbn >= 4.4.28` (for password-strength checking).
 
 ## Quick Start
 
@@ -106,9 +106,12 @@ Password-based authenticated key agreement (PAKE-like).
 
 **Constructor:**
 ```python
-PasswordHandShake(password: str)
+PasswordHandShake(password: str, min_bits: float = 40)
 ```
 - `password`: Pre-shared password string.
+- `min_bits`: Minimum estimated guess resistance (bits, via zxcvbn). The constructor raises `WeakPasswordError` for a weaker password. Pass `min_bits=0` to disable the check (e.g. for a machine-generated high-entropy secret).
+
+> ⚠️ **Breaking:** since the on-wire verifier is offline-crackable, weak passwords are now **refused** by default. Use a strong passphrase, `min_bits=0` to opt out, or prefer `NoiseHandShake`.
 
 **Methods:**
 - `generate_handshake() -> str`: Generate a hex-encoded handshake message (hsub).

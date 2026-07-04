@@ -24,7 +24,7 @@ def test_instantiate_password_handshake():
     """Test basic PasswordHandShake instantiation."""
     from poorman_handshake import PasswordHandShake
     password = "test_password"
-    shake = PasswordHandShake(password)
+    shake = PasswordHandShake(password, min_bits=0)
     assert shake.password == password
     assert shake.iv is None
     assert shake.salt is None
