@@ -10,7 +10,12 @@ authors = [{ name = "jarbasAI", email = "jarbasai@mailfence.com" }]
 license = "Apache-2.0"
 requires-python = ">=3.10"
 keywords = ["hivemind", "crypto", "handshake", "rsa", "key-exchange"]
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
+dependencies = [
+    "pycryptodomex>=3.19.1",
+    "noiseprotocol>=0.3.1",
+    "argon2-cffi>=21.3.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/JarbasHiveMind/poorman_handshake"
@@ -23,9 +28,9 @@ packages = [
     "poorman_handshake",
     "poorman_handshake.asymmetric",
     "poorman_handshake.symmetric",
+    "poorman_handshake.noise",
 ]
 include-package-data = true
 
 [tool.setuptools.dynamic]
 version = { attr = "poorman_handshake.version.__version__" }
-dependencies = { file = ["requirements.txt"] }
