@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a1) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a5...1.1.0a1)
+
+**Merged pull requests:**
+
+- feat: Noise \(XXpsk2/KKpsk0\) handshake primitive for HiveMind protocol v3 [\#17](https://github.com/JarbasHiveMind/poorman_handshake/pull/17) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.0.2a5](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a5) (2026-06-20)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a3...1.0.2a5)
