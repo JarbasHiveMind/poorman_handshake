@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a2) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a1...1.1.0a2)
+
+**Merged pull requests:**
+
+- docs: security analysis of the handshake constructions [\#18](https://github.com/JarbasHiveMind/poorman_handshake/pull/18) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.1.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a1) (2026-07-04)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a5...1.1.0a1)
