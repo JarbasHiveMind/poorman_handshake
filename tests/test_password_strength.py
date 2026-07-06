@@ -22,6 +22,11 @@ STRONG = [
     "MyDogChews5Bones every Tuesday",
 ]
 
+LONG_MACHINE_SECRET = (
+    "N7hPp0kCq9Zr2sVx6bLd4mTa8WfY3jQe5uIg1oSnKcR94HzXvBt6PaDy"
+    "M2lEwUqF8gJs0nRb5Tz"
+)
+
 
 @pytest.mark.parametrize("pw", WEAK)
 def test_weak_passwords_are_refused(pw):
@@ -56,6 +61,16 @@ def test_empty_password_refused():
 def test_bytes_password_supported():
     with pytest.raises(WeakPasswordError):
         check_password_strength(b"password")
+
+
+def test_long_machine_generated_password_supported():
+    PasswordHandShake(LONG_MACHINE_SECRET)
+    assert password_bits(LONG_MACHINE_SECRET) >= 40
+
+
+def test_long_guessable_password_still_refused():
+    with pytest.raises(WeakPasswordError):
+        PasswordHandShake("password" * 12)
 
 
 def test_password_bits_orders_by_strength():
