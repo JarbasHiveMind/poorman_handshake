@@ -13,7 +13,7 @@ authenticated symmetric encryption. The access key handed out by
 `hivemind-core add-client` is the pre-shared password consumed by the
 password path below.
 
-## Symmetric path — `PasswordHandShake`
+## Symmetric path: `PasswordHandShake`
 
 Both parties already share a password and derive a symmetric key without ever
 sending the password over the wire. This is Usenet **hSub** (hashed-subject)
@@ -23,7 +23,7 @@ addressing repurposed as a key-confirmation step.
 > (`SHA256(IV ‖ password)`, IV public) travels on the wire, so a passive
 > observer can mount an **offline dictionary attack** against a weak password.
 > Use a high-entropy access key here, and read [`security.md`](security.md)
-> before relying on this path — it is a worked example of why the distinction
+> before relying on this path. It is a worked example of why the distinction
 > matters.
 
 1. Each party generates a random 64-bit IV (`generate_iv`).
@@ -31,7 +31,7 @@ addressing repurposed as a key-confirmation step.
    (`create_hsub`) and sends it as the handshake message.
 3. On receipt, each party extracts the peer's IV (`iv_from_hsub`) and verifies
    the hsub against the shared password (`match_hsub`). A mismatch means the
-   peer does not hold the password — the handshake is rejected.
+   peer does not hold the password, so the handshake is rejected.
 4. The two IVs are XORed into a common salt, and the final key is derived with
    PBKDF2-HMAC-SHA256 over the password and that salt.
 
@@ -49,7 +49,7 @@ assert a.receive_and_verify(hb) and b.receive_and_verify(ha)
 assert compare_digest(a.secret, b.secret)
 ```
 
-## Asymmetric path — `HandShake`
+## Asymmetric path: `HandShake`
 
 Mutual RSA key agreement where **both** parties contribute randomness, so a
 single compromised party cannot dictate the key.
@@ -76,7 +76,7 @@ a.receive_and_verify(hb); b.receive_and_verify(ha)
 assert compare_digest(a.secret, b.secret)
 ```
 
-### One-way — `HalfHandShake`
+### One-way: `HalfHandShake`
 
 Subclass of `HandShake` for asymmetric trust: the **sender** chooses the secret
 and the **receiver** authenticates the sender. Only the sender's contribution
@@ -100,9 +100,9 @@ assert compare_digest(receiver.secret, sender.secret)
 stable public identity across restarts. With stable keys you can layer a trust
 model on top of the raw exchange:
 
-- **TOFU (trust on first use)** — pin a peer's public key the first time it is
-  seen and reject changes thereafter. See `examples/tofu_handshake.py`.
-- **Pre-distributed keys** — ship known public keys out of band and refuse
+- **TOFU (trust on first use)**: pin a peer's public key the first time it is
+  seen and reject changes after that. See `examples/tofu_handshake.py`.
+- **Pre-distributed keys**: ship known public keys out of band and refuse
   unknown peers. See `examples/static_handshake.py`.
 
 The `examples/*_mitm.py` scripts demonstrate why out-of-band public-key
@@ -115,11 +115,11 @@ side already knows the other's authentic public key.
 `poorman_handshake.asymmetric.utils` exposes the primitives the handshake is
 built from, usable directly for ad-hoc encryption or signing:
 
-- `encrypt_RSA` / `decrypt_RSA` — RSA-OAEP for short payloads.
-- `hybrid_encrypt_RSA` / `hybrid_decrypt_RSA` — RSA-wrapped AES-GCM for
+- `encrypt_RSA` / `decrypt_RSA`: RSA-OAEP for short payloads.
+- `hybrid_encrypt_RSA` / `hybrid_decrypt_RSA`: RSA-wrapped AES-GCM for
   arbitrary-length payloads.
-- `sign_RSA` / `verify_RSA` — RSA-PSS signatures.
-- `load_RSA_key` / `export_RSA_key` / `create_RSA_key` — PEM key management.
+- `sign_RSA` / `verify_RSA`: RSA-PSS signatures.
+- `load_RSA_key` / `export_RSA_key` / `create_RSA_key`: PEM key management.
 
 ## Security caveats
 
@@ -129,7 +129,10 @@ ChaCha20-Poly1305), and public-key distribution must be validated out of band.
 
 Both paths have real limits that shape when they are safe to use: the password
 path is offline-guessable and only safe with a high-entropy key, and the RSA
-path provides **no forward secrecy**. These are analysed in depth — with the
+path provides **no forward secrecy**. These are analyzed in depth, with the
 threat model, the exact attacks, and why they are a cautionary tale about
-composing your own crypto — in [`security.md`](security.md). Read it before
+composing your own crypto, in [`security.md`](security.md). Read it before
 using either handshake outside its original context.
+
+---
+[Home](../README.md) · [Security analysis →](security.md)
