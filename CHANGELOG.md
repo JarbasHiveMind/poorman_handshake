@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a2) (2026-07-31)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a1...2.0.0a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#25](https://github.com/JarbasHiveMind/poorman_handshake/pull/25) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.0.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a1) (2026-07-04)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a2...2.0.0a1)
