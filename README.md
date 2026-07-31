@@ -1,13 +1,13 @@
 # Poor Man's Handshake
 
-Securely exchange symmetric encryption keys over insecure channels using a Noise-framework handshake or the legacy password / RSA handshakes. This library provides the cryptographic bootstrap primitive for the HiveMind distributed mesh — nodes use it to establish a shared session secret before raising an encrypted channel.
+Securely exchange symmetric encryption keys over insecure channels using a Noise-framework handshake or the legacy password / RSA handshakes. This library provides the cryptographic bootstrap primitive for the HiveMind distributed mesh. Nodes use it to establish a shared session secret before raising an encrypted channel.
 
-> **Which handshake should I use?** The **Noise handshake** (`NoiseHandShake`) is the recommended path: it adds forward secrecy, PAKE-grade password authentication (no offline-crackable image on the wire), replay resistance, and downgrade protection that the password and RSA handshakes lack. The legacy handshakes remain for interoperability with existing deployments. See [`docs/security.md`](docs/security.md) for the full analysis of why.
+> **Which handshake should I use?** The **Noise handshake** (`NoiseHandShake`) is the recommended path. It adds forward secrecy, PAKE-grade password authentication (no offline-crackable image on the wire), replay resistance, and downgrade protection. The password and RSA handshakes lack these properties. The legacy handshakes remain for interoperability with existing deployments. See [`docs/security.md`](docs/security.md) for the full analysis.
 
 ## Features
 
-- **Noise handshake** (`NoiseHandShake`): A [Noise Protocol Framework](https://noiseprotocol.org/) authenticated key exchange (`Noise_XXpsk2` / `Noise_KKpsk0` over X25519 + ChaCha20-Poly1305 + SHA-256). The shared password enters as the Noise PSK — never as an on-wire image — and session keys come from an ephemeral X25519 exchange, giving **forward secrecy**, **PAKE-grade** password authentication, per-message **replay resistance**, and prologue-bound **downgrade protection**. Static keys are learned during `XX` for trust-on-first-use pinning. This is HiveMind protocol v3.
-- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256. Note: the on-wire verifier is an offline-crackable image of the password (safe only with a high-entropy secret) — prefer `NoiseHandShake`.
+- **Noise handshake** (`NoiseHandShake`): A [Noise Protocol Framework](https://noiseprotocol.org/) authenticated key exchange (`Noise_XXpsk2` / `Noise_KKpsk0` over X25519 + ChaCha20-Poly1305 + SHA-256). The shared password enters as the Noise PSK, never as an on-wire image. Session keys come from an ephemeral X25519 exchange, giving **forward secrecy**, **PAKE-grade** password authentication, per-message **replay resistance**, and prologue-bound **downgrade protection**. Static keys are learned during `XX` for trust-on-first-use pinning. This is HiveMind protocol v3.
+- **Password-based key exchange** (`PasswordHandShake`): Derive a shared symmetric key from a pre-shared password without ever transmitting the password. Each party generates a random IV, hashes it with the password, and XORs the IVs to form a common salt. The final key is derived via PBKDF2-HMAC-SHA256. The on-wire verifier is an offline-crackable image of the password, safe only with a high-entropy secret. Prefer `NoiseHandShake` instead.
 - **RSA public-key exchange** (`HandShake`): Mutual RSA key agreement where both parties contribute a random secret. The secrets are XORed to form the final shared key, ensuring both contributions are needed.
 - **Asymmetric exchange** (`HalfHandShake`): One-way key agreement for asymmetric trust scenarios (only one party's secret is used).
 - **Hybrid RSA+AES-GCM encryption**: Arbitrary-length plaintext support via RSA-encrypted AES keys.
@@ -25,8 +25,8 @@ Requires Python 3.10+, `pycryptodomex >= 3.19.1`, `noiseprotocol >= 0.3.1`, `arg
 
 ### Noise handshake (recommended)
 
-Both peers share a site *password*; the connecting node initiates. The default
-`XXpsk2` pattern needs no prior knowledge of the peer's static key — each side
+Both peers share a site *password*. The connecting node starts the exchange. The default
+`XXpsk2` pattern needs no prior knowledge of the peer's static key. Each side
 learns and can pin it during the exchange.
 
 ```python
@@ -110,7 +110,7 @@ print(f"Shared secret: {alice.secret.hex()}")
 
 ### One-way handshake (asymmetric trust)
 
-`HalfHandShake` derives the secret directly without XOR, for scenarios where only one party's contribution matters. The sender chooses the secret and encrypts it with the receiver's public key; the receiver authenticates the sender and decrypts the secret. Only the receiver needs the sender's public key in advance:
+`HalfHandShake` derives the secret directly without XOR, for scenarios where only one party's contribution matters. The sender chooses the secret and encrypts it with the receiver's public key. The receiver authenticates the sender and decrypts the secret. Only the receiver needs the sender's public key in advance:
 
 ```python
 from poorman_handshake import HalfHandShake
@@ -155,8 +155,8 @@ NoiseHandShake(
 - `path`: Optional file to load/persist the static X25519 key (generated if absent).
 - `password` / `node_id`: Shared password, stretched into the 32-byte PSK with argon2id salted by `SHA-256(node_id)`. Provide either this pair or `psk`.
 - `psk`: A pre-derived 32-byte pre-shared key (alternative to `password`).
-- `remote_pubkey`: Peer static public key (hex or 32 raw bytes). Supplying it selects `KKpsk0`; omitting it uses `XXpsk2` (learn-and-pin).
-- `prologue`: Bytes bound into the handshake hash for downgrade protection; both sides must supply identical bytes. Encode the negotiated protocol version and cipher/encoding lists here.
+- `remote_pubkey`: Peer static public key (hex or 32 raw bytes). Supplying it selects `KKpsk0`. Omitting it uses `XXpsk2` (learn-and-pin).
+- `prologue`: Bytes bound into the handshake hash for downgrade protection. Both sides must supply identical bytes. Encode the negotiated protocol version and cipher/encoding lists here.
 - `pattern`: Override the Noise protocol name (defaults per `remote_pubkey`).
 
 **Methods:**
@@ -169,7 +169,7 @@ NoiseHandShake(
 **Properties:**
 - `handshake_finished: bool`: Whether the handshake is complete.
 - `pubkey: str` / `pubkey_bytes: bytes`: This node's static public key.
-- `remote_pubkey: bytes | None`: The peer's static public key (learned during `XX`); pin it for TOFU.
+- `remote_pubkey: bytes | None`: The peer's static public key, learned during `XX`. Pin it for TOFU.
 - `handshake_hash: bytes | None`: Shared transcript fingerprint for channel binding.
 
 ### `derive_psk(password, node_id=None, salt=None) -> bytes`
@@ -178,7 +178,7 @@ Derive a 32-byte Noise PSK from a password using argon2id. The salt defaults to 
 
 ### `PasswordHandShake`
 
-Password-based key agreement. **Not a PAKE** — the handshake transmits a salted-hash *verifier* of the password, which a passive observer can attack offline; it is safe only with a high-entropy shared secret. For a low-entropy password, use `NoiseHandShake` instead (see [`docs/security.md`](docs/security.md)).
+Password-based key agreement. **Not a PAKE.** The handshake transmits a salted-hash *verifier* of the password, which a passive observer can attack offline. It is safe only with a high-entropy shared secret. For a low-entropy password, use `NoiseHandShake` instead (see [`docs/security.md`](docs/security.md)).
 
 **Constructor:**
 ```python
@@ -187,7 +187,7 @@ PasswordHandShake(password: str, min_bits: float = 40)
 - `password`: Pre-shared password string.
 - `min_bits`: Minimum estimated guess resistance (bits, via zxcvbn). The constructor raises `WeakPasswordError` for a weaker password. Pass `min_bits=0` to disable the check (e.g. for a machine-generated high-entropy secret).
 
-> ⚠️ **Breaking:** since the on-wire verifier is offline-crackable, weak passwords are now **refused** by default. Use a strong passphrase, `min_bits=0` to opt out, or prefer `NoiseHandShake`.
+> **Breaking:** the on-wire verifier is offline-crackable, so weak passwords are now **refused** by default. Use a strong passphrase, pass `min_bits=0` to opt out, or prefer `NoiseHandShake`.
 
 **Methods:**
 - `generate_handshake() -> str`: Generate a hex-encoded handshake message (hsub).
@@ -274,12 +274,12 @@ resistance, forward secrecy, MITM resistance, transcript binding).
 
 ## Security Notes
 
-The **Noise handshake** (`NoiseHandShake`) is the recommended path and provides forward secrecy, PAKE-grade password authentication, replay resistance, and downgrade protection out of the box. The legacy password and RSA handshakes remain for interoperability; when using them in security-critical applications:
-- Prefer a high-entropy shared secret — the password verifier is offline-crackable (see [`docs/security.md`](./docs/security.md)).
+The **Noise handshake** (`NoiseHandShake`) is the recommended path and provides forward secrecy, PAKE-grade password authentication, replay resistance, and downgrade protection out of the box. The legacy password and RSA handshakes remain for interoperability. When using them in security-critical applications:
+- Prefer a high-entropy shared secret. The password verifier is offline-crackable (see [`docs/security.md`](./docs/security.md)).
 - Ensure channel integrity after handshake (the derived secret should be used with authenticated encryption like AES-GCM or ChaCha20-Poly1305).
 - Validate out-of-band public key distribution (TOFU, PKI, or other models).
-- The RSA path has no forward secrecy — a later key compromise decrypts past sessions; use `NoiseHandShake` where that matters.
+- The RSA path has no forward secrecy. A later key compromise decrypts past sessions, so use `NoiseHandShake` where that matters.
 
 ## License
 
-Apache License 2.0 — see [LICENSE.md](./LICENSE.md).
+Apache License 2.0. See [LICENSE.md](./LICENSE.md).
