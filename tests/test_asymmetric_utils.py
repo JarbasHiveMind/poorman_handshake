@@ -144,28 +144,30 @@ def test_sign_verify_string():
 # from one identity file -- a connection storm re-paid that cost per client.
 
 def test_rsa_key_cache_repeat_loads_share_object(tmp_path):
+    # create_RSA_key returns (public, private); bind the PRIVATE key so the
+    # consistency-check path this cache optimizes is what gets exercised
     from poorman_handshake.asymmetric.utils import load_RSA_key, create_RSA_key
-    priv, _ = create_RSA_key()
+    _, priv = create_RSA_key()
     path = tmp_path / "id.pem"
     path.write_text(priv)
     first = load_RSA_key(str(path))
+    assert first.has_private()
     assert load_RSA_key(str(path)) is first, \
-        "unchanged file must serve the cached key"
+        "unchanged content must serve the cached key"
 
 
 def test_rsa_key_cache_rewritten_file_reloads(tmp_path):
     from poorman_handshake.asymmetric.utils import load_RSA_key, create_RSA_key
-    priv1, _ = create_RSA_key()
-    priv2, _ = create_RSA_key()
+    _, priv1 = create_RSA_key()
+    _, priv2 = create_RSA_key()
     path = tmp_path / "id.pem"
     path.write_text(priv1)
     first = load_RSA_key(str(path))
+    # content-digest validation: a rewrite is detected deterministically,
+    # independent of filesystem timestamp resolution
     path.write_text(priv2)
-    # force a distinct stat signature even on coarse-mtime filesystems
-    st = os.stat(path)
-    os.utime(path, ns=(st.st_atime_ns, st.st_mtime_ns + 1_000_000))
     second = load_RSA_key(str(path))
-    assert second is not first, "rewritten key file must reload"
+    assert second is not first, "rewritten key content must reload"
     assert first.n != second.n
 
 

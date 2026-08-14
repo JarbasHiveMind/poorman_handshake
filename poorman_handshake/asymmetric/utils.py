@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import warnings
@@ -83,13 +84,16 @@ def export_RSA_key(key: Union[str, bytes, RSA.RsaKey], path: str):
         f.write(key)
 
 
-# (realpath) -> (mtime_ns, size, RsaKey). RSA.import_key runs a full
+# (realpath) -> (sha256(pem), RsaKey). RSA.import_key runs a full
 # consistency check on private keys -- ~100 ms on a CPU-constrained host --
 # and long-lived servers construct a HandShake per client connection from
 # the same key file, so a connection storm pays that cost N times over.
-# The imported key object is never mutated by this library, so sharing one
-# instance per (file, version) is safe; a rewritten key file changes the
-# stat signature and reloads.
+# Validation is by CONTENT digest, not stat signature: mtime resolution is
+# filesystem-dependent, so a same-size rewrite within one timestamp tick
+# could otherwise keep a rotated key active. Reading + hashing the PEM is
+# ~10us -- still four orders of magnitude cheaper than the import. The
+# imported key object is never mutated by this library, so sharing one
+# instance per content version is safe.
 _RSA_KEY_CACHE: dict = {}
 
 
@@ -97,9 +101,9 @@ def load_RSA_key(path: str) -> RSA.RsaKey:
     """
     Loads an RSA key (public or private) from a file.
 
-    Repeat loads of the same unchanged file (same mtime and size) return a
-    cached key object instead of re-running ``RSA.import_key``'s expensive
-    private-key consistency check.
+    Repeat loads of unchanged content (same PEM bytes) return a cached key
+    object instead of re-running ``RSA.import_key``'s expensive private-key
+    consistency check.
 
     Args:
         path (str): The file path to the PEM-formatted key.
@@ -108,14 +112,14 @@ def load_RSA_key(path: str) -> RSA.RsaKey:
         RSA.RsaKey: The loaded RSA key.
     """
     real = os.path.realpath(path)
-    st = os.stat(real)
-    signature = (st.st_mtime_ns, st.st_size)
-    cached = _RSA_KEY_CACHE.get(real)
-    if cached is not None and cached[0] == signature:
-        return cached[1]
     with open(real, "rb") as f:
-        key = RSA.import_key(f.read())
-    _RSA_KEY_CACHE[real] = (signature, key)
+        pem = f.read()
+    digest = hashlib.sha256(pem).digest()
+    cached = _RSA_KEY_CACHE.get(real)
+    if cached is not None and cached[0] == digest:
+        return cached[1]
+    key = RSA.import_key(pem)
+    _RSA_KEY_CACHE[real] = (digest, key)
     return key
 
 
