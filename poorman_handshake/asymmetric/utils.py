@@ -83,9 +83,23 @@ def export_RSA_key(key: Union[str, bytes, RSA.RsaKey], path: str):
         f.write(key)
 
 
+# (realpath) -> (mtime_ns, size, RsaKey). RSA.import_key runs a full
+# consistency check on private keys -- ~100 ms on a CPU-constrained host --
+# and long-lived servers construct a HandShake per client connection from
+# the same key file, so a connection storm pays that cost N times over.
+# The imported key object is never mutated by this library, so sharing one
+# instance per (file, version) is safe; a rewritten key file changes the
+# stat signature and reloads.
+_RSA_KEY_CACHE: dict = {}
+
+
 def load_RSA_key(path: str) -> RSA.RsaKey:
     """
     Loads an RSA key (public or private) from a file.
+
+    Repeat loads of the same unchanged file (same mtime and size) return a
+    cached key object instead of re-running ``RSA.import_key``'s expensive
+    private-key consistency check.
 
     Args:
         path (str): The file path to the PEM-formatted key.
@@ -93,8 +107,16 @@ def load_RSA_key(path: str) -> RSA.RsaKey:
     Returns:
         RSA.RsaKey: The loaded RSA key.
     """
-    with open(path, "rb") as f:
-        return RSA.import_key(f.read())
+    real = os.path.realpath(path)
+    st = os.stat(real)
+    signature = (st.st_mtime_ns, st.st_size)
+    cached = _RSA_KEY_CACHE.get(real)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    with open(real, "rb") as f:
+        key = RSA.import_key(f.read())
+    _RSA_KEY_CACHE[real] = (signature, key)
+    return key
 
 
 def create_RSA_key(key_size=2048) -> Tuple[str, str]:
