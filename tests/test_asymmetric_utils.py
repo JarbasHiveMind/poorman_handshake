@@ -135,3 +135,43 @@ def test_sign_verify_string():
 
     signature = sign_RSA(sec, message)
     assert verify_RSA(pub, message, signature)
+
+
+
+# --- load_RSA_key memoization -------------------------------------------
+# RSA.import_key runs a full consistency check on private keys (~100ms on
+# constrained hosts) and servers construct a HandShake per client connection
+# from one identity file -- a connection storm re-paid that cost per client.
+
+def test_rsa_key_cache_repeat_loads_share_object(tmp_path):
+    # create_RSA_key returns (public, private); bind the PRIVATE key so the
+    # consistency-check path this cache optimizes is what gets exercised
+    from poorman_handshake.asymmetric.utils import load_RSA_key, create_RSA_key
+    _, priv = create_RSA_key()
+    path = tmp_path / "id.pem"
+    path.write_text(priv)
+    first = load_RSA_key(str(path))
+    assert first.has_private()
+    assert load_RSA_key(str(path)) is first, \
+        "unchanged content must serve the cached key"
+
+
+def test_rsa_key_cache_rewritten_file_reloads(tmp_path):
+    from poorman_handshake.asymmetric.utils import load_RSA_key, create_RSA_key
+    _, priv1 = create_RSA_key()
+    _, priv2 = create_RSA_key()
+    path = tmp_path / "id.pem"
+    path.write_text(priv1)
+    first = load_RSA_key(str(path))
+    # content-digest validation: a rewrite is detected deterministically,
+    # independent of filesystem timestamp resolution
+    path.write_text(priv2)
+    second = load_RSA_key(str(path))
+    assert second is not first, "rewritten key content must reload"
+    assert first.n != second.n
+
+
+def test_rsa_key_cache_missing_file_still_raises():
+    from poorman_handshake.asymmetric.utils import load_RSA_key
+    with pytest.raises(OSError):
+        load_RSA_key("/nonexistent/key.pem")

@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import warnings
@@ -83,9 +84,26 @@ def export_RSA_key(key: Union[str, bytes, RSA.RsaKey], path: str):
         f.write(key)
 
 
+# (realpath) -> (sha256(pem), RsaKey). RSA.import_key runs a full
+# consistency check on private keys -- ~100 ms on a CPU-constrained host --
+# and long-lived servers construct a HandShake per client connection from
+# the same key file, so a connection storm pays that cost N times over.
+# Validation is by CONTENT digest, not stat signature: mtime resolution is
+# filesystem-dependent, so a same-size rewrite within one timestamp tick
+# could otherwise keep a rotated key active. Reading + hashing the PEM is
+# ~10us -- still four orders of magnitude cheaper than the import. The
+# imported key object is never mutated by this library, so sharing one
+# instance per content version is safe.
+_RSA_KEY_CACHE: dict = {}
+
+
 def load_RSA_key(path: str) -> RSA.RsaKey:
     """
     Loads an RSA key (public or private) from a file.
+
+    Repeat loads of unchanged content (same PEM bytes) return a cached key
+    object instead of re-running ``RSA.import_key``'s expensive private-key
+    consistency check.
 
     Args:
         path (str): The file path to the PEM-formatted key.
@@ -93,8 +111,16 @@ def load_RSA_key(path: str) -> RSA.RsaKey:
     Returns:
         RSA.RsaKey: The loaded RSA key.
     """
-    with open(path, "rb") as f:
-        return RSA.import_key(f.read())
+    real = os.path.realpath(path)
+    with open(real, "rb") as f:
+        pem = f.read()
+    digest = hashlib.sha256(pem).digest()
+    cached = _RSA_KEY_CACHE.get(real)
+    if cached is not None and cached[0] == digest:
+        return cached[1]
+    key = RSA.import_key(pem)
+    _RSA_KEY_CACHE[real] = (digest, key)
+    return key
 
 
 def create_RSA_key(key_size=2048) -> Tuple[str, str]:
