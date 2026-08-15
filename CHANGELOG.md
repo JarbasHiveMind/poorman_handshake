@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.0a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a3) (2026-08-15)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a2...2.0.0a3)
+
+**Merged pull requests:**
+
+- docs: add AGENTS.md with per-repo agent conventions [\#28](https://github.com/JarbasHiveMind/poorman_handshake/pull/28) ([JarbasAl](https://github.com/JarbasAl))
+- perf: memoize load\_RSA\_key by path + content digest [\#27](https://github.com/JarbasHiveMind/poorman_handshake/pull/27) ([goldyfruit](https://github.com/goldyfruit))
+
 ## [2.0.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a2) (2026-07-31)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a1...2.0.0a2)
