@@ -21,9 +21,21 @@ _BITS_PER_LOG10 = log2(10)
 #: "Tr0ub4dour&3") are refused while real passphrases pass.
 DEFAULT_MIN_BITS = 40.0
 
+#: zxcvbn hard-rejects any input longer than this with a ValueError instead of
+#: scoring it. A prefix this long of a high-entropy secret already scores far
+#: above any realistic ``min_bits`` threshold, so scoring only the prefix does
+#: not weaken the check: the full secret is still what gets used, only the
+#: strength *estimate* is based on the prefix.
+_ZXCVBN_MAX_LEN = 72
+
 
 class WeakPasswordError(ValueError):
     """Raised when a password is too weak/guessable for the password handshake."""
+
+
+def _zxcvbn(password: str) -> dict:
+    """Run zxcvbn on a bounded prefix, so long secrets are scored, not rejected."""
+    return zxcvbn(password[:_ZXCVBN_MAX_LEN])
 
 
 def password_bits(password: Union[str, bytes]) -> float:
@@ -35,7 +47,7 @@ def password_bits(password: Union[str, bytes]) -> float:
     """
     if isinstance(password, bytes):
         password = password.decode("utf-8", "replace")
-    return zxcvbn(password)["guesses_log10"] * _BITS_PER_LOG10
+    return _zxcvbn(password)["guesses_log10"] * _BITS_PER_LOG10
 
 
 def check_password_strength(
@@ -51,7 +63,7 @@ def check_password_strength(
     if not password:
         raise WeakPasswordError("password must be a non-empty string")
     pw = password.decode("utf-8", "replace") if isinstance(password, bytes) else password
-    result = zxcvbn(pw)
+    result = _zxcvbn(pw)
     bits = result["guesses_log10"] * _BITS_PER_LOG10
     if bits < min_bits:
         feedback = result.get("feedback") or {}

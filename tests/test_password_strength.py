@@ -1,3 +1,5 @@
+import secrets
+
 import pytest
 
 from poorman_handshake import (
@@ -6,6 +8,7 @@ from poorman_handshake import (
     check_password_strength,
     password_bits,
 )
+from poorman_handshake.symmetric.strength import DEFAULT_MIN_BITS
 
 
 WEAK = [
@@ -60,3 +63,27 @@ def test_bytes_password_supported():
 
 def test_password_bits_orders_by_strength():
     assert password_bits("password") < password_bits("correct horse battery staple")
+
+
+def test_long_machine_secret_is_scored_not_raised():
+    # A 128-char hex secret (a realistic 64-byte machine secret) exceeds
+    # zxcvbn's internal 72-char hard cap; it must be scored via a bounded
+    # prefix, not raise ValueError out of the strength check.
+    secret = secrets.token_hex(64)
+    assert len(secret) == 128
+    bits = password_bits(secret)
+    assert bits > DEFAULT_MIN_BITS
+    # Does not raise, and the handshake still works with the full secret.
+    check_password_strength(secret)
+    a = PasswordHandShake(secret)
+    b = PasswordHandShake(secret)
+    assert b.verify(a.generate_handshake())
+
+
+def test_long_weak_password_is_still_refused():
+    # Truncating for scoring must not become a bypass: a long but low-entropy
+    # password (padded well past the 72-char cap) is still refused.
+    weak_long = "password" * 10
+    assert len(weak_long) > 72
+    with pytest.raises(WeakPasswordError):
+        check_password_strength(weak_long)
