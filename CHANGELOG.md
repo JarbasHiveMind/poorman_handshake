@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.1a1) (2026-09-10)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a3...2.0.1a1)
+
+**Merged pull requests:**
+
+- fix: score bounded prefix in zxcvbn calls instead of raising on long secrets [\#30](https://github.com/JarbasHiveMind/poorman_handshake/pull/30) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [2.0.0a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a3) (2026-08-15)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a2...2.0.0a3)
