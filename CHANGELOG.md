@@ -1,20 +1,86 @@
 # Changelog
 
-## [0.2.2a4](https://github.com/JarbasHiveMind/poorman_handshake/tree/0.2.2a4) (2024-12-30)
+## [2.0.1a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.1a1) (2026-09-10)
 
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/V0.2.2a3...0.2.2a4)
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a3...2.0.1a1)
 
 **Merged pull requests:**
 
-- refactor!: use RSA directly, drop PGPy [\#1](https://github.com/JarbasHiveMind/poorman_handshake/pull/1) ([JarbasAl](https://github.com/JarbasAl))
+- fix: score bounded prefix in zxcvbn calls instead of raising on long secrets [\#30](https://github.com/JarbasHiveMind/poorman_handshake/pull/30) ([JarbasAl](https://github.com/JarbasAl))
 
-## [V0.2.2a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/V0.2.2a3) (2023-08-03)
+## [2.0.0a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a3) (2026-08-15)
 
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/V0.2.2a2...V0.2.2a3)
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a2...2.0.0a3)
 
-## [V0.2.2a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/V0.2.2a2) (2023-08-03)
+**Merged pull requests:**
 
-[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/0.2.0...V0.2.2a2)
+- docs: add AGENTS.md with per-repo agent conventions [\#28](https://github.com/JarbasHiveMind/poorman_handshake/pull/28) ([JarbasAl](https://github.com/JarbasAl))
+- perf: memoize load\_RSA\_key by path + content digest [\#27](https://github.com/JarbasHiveMind/poorman_handshake/pull/27) ([goldyfruit](https://github.com/goldyfruit))
+
+## [2.0.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a2) (2026-07-31)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a1...2.0.0a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#25](https://github.com/JarbasHiveMind/poorman_handshake/pull/25) ([JarbasAl](https://github.com/JarbasAl))
+
+## [2.0.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.0a1) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a2...2.0.0a1)
+
+**Breaking changes:**
+
+- feat!: refuse low-entropy guessable passwords in PasswordHandShake [\#20](https://github.com/JarbasHiveMind/poorman_handshake/pull/20) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.1.0a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a2) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.1.0a1...1.1.0a2)
+
+**Merged pull requests:**
+
+- docs: security analysis of the handshake constructions [\#18](https://github.com/JarbasHiveMind/poorman_handshake/pull/18) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.1.0a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.1.0a1) (2026-07-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a5...1.1.0a1)
+
+**Merged pull requests:**
+
+- feat: Noise \(XXpsk2/KKpsk0\) handshake primitive for HiveMind protocol v3 [\#17](https://github.com/JarbasHiveMind/poorman_handshake/pull/17) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.0.2a5](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a5) (2026-06-20)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a3...1.0.2a5)
+
+**Merged pull requests:**
+
+- ci: modernize publish workflows \(drop setup.py build\) [\#15](https://github.com/JarbasHiveMind/poorman_handshake/pull/15) ([JarbasAl](https://github.com/JarbasAl))
+- build: migrate setup.py → pyproject.toml [\#14](https://github.com/JarbasHiveMind/poorman_handshake/pull/14) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.0.2a3](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a3) (2026-06-05)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a2...1.0.2a3)
+
+**Merged pull requests:**
+
+- docs: zero-to-hero README + protocol reference [\#11](https://github.com/JarbasHiveMind/poorman_handshake/pull/11) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.0.2a2](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a2) (2026-06-04)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.2a1...1.0.2a2)
+
+**Merged pull requests:**
+
+- Add README, CI workflows, and unit tests [\#9](https://github.com/JarbasHiveMind/poorman_handshake/pull/9) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.0.2a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/1.0.2a1) (2025-12-18)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/1.0.1...1.0.2a1)
+
+**Merged pull requests:**
+
+- Configure Renovate [\#3](https://github.com/JarbasHiveMind/poorman_handshake/pull/3) ([renovate[bot]](https://github.com/apps/renovate))
 
 
 
