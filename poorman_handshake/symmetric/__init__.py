@@ -41,7 +41,18 @@ class PasswordHandShake:
         self.iv = generate_iv()
         return create_hsub(self.password, self.iv)
 
+    def _is_own_iv(self, shake) -> bool:
+        """True when ``shake`` carries the IV of this object's own envelope.
+
+        A peer that does not know the password can send this object's envelope
+        back: the hash over the same IV matches, and the salt (XOR of the two
+        IVs) becomes all zero bytes. A genuine peer draws its own random IV.
+        """
+        return self.iv is not None and iv_from_hsub(shake) == self.iv
+
     def receive_handshake(self, shake):
+        if self._is_own_iv(shake):
+            raise ValueError("refusing a handshake that carries this side's own IV")
         self.salt = bytes(a ^ b for (a, b) in
                           zip(self.iv, iv_from_hsub(shake)))
 
@@ -52,6 +63,8 @@ class PasswordHandShake:
         return False
 
     def verify(self, shake):
+        if self._is_own_iv(shake):
+            return False
         if match_hsub(shake, self.password):
             return True
         return False

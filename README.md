@@ -191,8 +191,8 @@ PasswordHandShake(password: str, min_bits: float = 40)
 
 **Methods:**
 - `generate_handshake() -> str`: Generate a hex-encoded handshake message (hsub).
-- `receive_handshake(shake: str) -> None`: Process a peer's handshake and compute salt.
-- `verify(shake: str) -> bool`: Check if a handshake matches the password.
+- `receive_handshake(shake: str) -> None`: Process a peer's handshake and compute salt. Raises `ValueError` when the handshake carries this object's own IV.
+- `verify(shake: str) -> bool`: Check if a handshake matches the password. Returns `False` for a handshake that carries this object's own IV (its own message sent back).
 - `receive_and_verify(shake: str) -> bool`: Verify and receive in one step.
 
 **Properties:**
