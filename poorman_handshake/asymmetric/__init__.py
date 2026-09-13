@@ -19,6 +19,12 @@ from poorman_handshake.asymmetric.utils import (
     sign_RSA,
     verify_RSA,
 )
+
+
+class InvalidSignatureError(ValueError):
+    """A handshake message's signature does not verify against the sender's public key."""
+
+
 class HandShake:
     """
     RSA handshake using encryption and signatures (legacy; **discouraged**).
@@ -167,17 +173,28 @@ class HandShake:
         return verify_RSA(pub, ciphertext, signature)
 
     def receive_and_verify(self, shake: Union[str, bytes],
-                           pub: Optional[Union[str, bytes, RSA.RsaKey]] = None):
+                           pub: Optional[Union[str, bytes, RSA.RsaKey]] = None) -> bool:
         """
         Verifies and processes a handshake message.
 
         Args:
             shake (bytes): Hex-encoded handshake message (signature + ciphertext).
             pub (str, optional): Public key in PEM format of the sender.
+
+        Returns:
+            bool: True once the signature verified and the secret was received.
+
+        Raises:
+            InvalidSignatureError: the signature does not verify. ``secret`` is
+                not changed.
         """
         pub = pub or self.target_key
-        if self.verify(shake, pub):
-            self.receive_handshake(shake)
+        if not self.verify(shake, pub):
+            # Returning quietly here left ``secret`` at whatever the caller
+            # held, which callers then used as the session key.
+            raise InvalidSignatureError("handshake signature does not verify")
+        self.receive_handshake(shake)
+        return True
 
 
 class HalfHandShake(HandShake):

@@ -77,6 +77,38 @@ def test_handshake_verify_incorrect():
     assert not alice.verify(tampered, bob.pubkey)
 
 
+def test_receive_and_verify_raises_on_a_rogue_signature():
+    """A handshake signed by another key raises and leaves the secret unchanged."""
+    from poorman_handshake import InvalidSignatureError
+    alice = HandShake()
+    bob = HandShake()
+    eve = HandShake()
+    alice.load_public(bob.pubkey)                  # alice pins bob
+    rogue_shake = eve.generate_handshake(alice.pubkey)
+
+    alice.secret = bytes(32)                       # what a caller that never sent a shake holds
+    with pytest.raises(InvalidSignatureError):
+        alice.receive_and_verify(rogue_shake)
+    assert alice.secret == bytes(32)
+
+    alice.secret = b"s" * 32
+    with pytest.raises(ValueError):                # a subclass of ValueError
+        alice.receive_and_verify(rogue_shake, bob.pubkey)
+    assert alice.secret == b"s" * 32
+
+
+def test_receive_and_verify_returns_true_on_a_genuine_signature():
+    alice = HandShake()
+    bob = HandShake()
+    alice.load_public(bob.pubkey)
+    bob.load_public(alice.pubkey)
+    alice_shake = alice.generate_handshake()
+    bob_shake = bob.generate_handshake()
+    assert alice.receive_and_verify(bob_shake) is True
+    assert bob.receive_and_verify(alice_shake) is True
+    assert compare_digest(alice.secret, bob.secret)
+
+
 def test_handshake_pubkey_export():
     """Test that pubkey is properly PEM-encoded."""
     shake = HandShake()
