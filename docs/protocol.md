@@ -31,7 +31,10 @@ addressing repurposed as a key-confirmation step.
    (`create_hsub`) and sends it as the handshake message.
 3. On receipt, each party extracts the peer's IV (`iv_from_hsub`) and verifies
    the hsub against the shared password (`match_hsub`). A mismatch means the
-   peer does not hold the password, so the handshake is rejected.
+   peer does not hold the password, so the handshake is rejected. A hsub that
+   carries the receiver's own IV is also rejected: it is the receiver's own
+   message sent back, which any peer can do without the password, and it
+   would make the salt all zero bytes.
 4. The two IVs are XORed into a common salt, and the final key is derived with
    PBKDF2-HMAC-SHA256 over the password and that salt.
 
