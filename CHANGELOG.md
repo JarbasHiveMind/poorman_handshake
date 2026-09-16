@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.2a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.2a1) (2026-09-16)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.1a1...2.0.2a1)
+
+**Closed issues:**
+
+- Password strength check rejects long machine secrets [\#23](https://github.com/JarbasHiveMind/poorman_handshake/issues/23)
+
+**Merged pull requests:**
+
+- fix: HandShake.receive\_and\_verify raises on a bad signature [\#32](https://github.com/JarbasHiveMind/poorman_handshake/pull/32) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.0.1a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.1a1) (2026-09-10)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.0a3...2.0.1a1)
