@@ -216,7 +216,7 @@ HandShake(path: str = None, key_size: int = 2048)
 - `export_private_key(path: str) -> None`: Save the private key to a file (PEM format).
 - `verify(shake: str, pub: Union[str, bytes, RSA.RsaKey]) -> bool`: Verify a handshake signature.
 - `receive_handshake(shake: str) -> None`: Decrypt a handshake and XOR with locally generated secret.
-- `receive_and_verify(shake: str, pub: Union[str, bytes, RSA.RsaKey] = None) -> None`: Verify signature, then receive.
+- `receive_and_verify(shake: str, pub: Union[str, bytes, RSA.RsaKey] = None) -> bool`: Verify signature, then receive. Returns `True`. Raises `InvalidSignatureError` (a `ValueError`) when the signature does not verify, and leaves `secret` unchanged.
 
 **Properties:**
 - `pubkey: str`: PEM-encoded public key.

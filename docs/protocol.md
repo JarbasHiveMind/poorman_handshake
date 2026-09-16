@@ -61,6 +61,8 @@ single compromised party cannot dictate the key.
    peer's public key (RSA-OAEP), and sends the concatenation as the handshake.
 4. `receive_and_verify` checks the signature against the peer's public key,
    decrypts the peer's secret, and XORs it with the locally chosen secret.
+   When the signature does not verify, it raises `InvalidSignatureError` (a
+   `ValueError`) and does not change `secret`.
 
 The final `secret` is the XOR of both contributions, so it is identical on both
 ends and depends on input from each.
