@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.3a1) (2026-09-16)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.2a1...2.0.3a1)
+
+**Merged pull requests:**
+
+- fix: PasswordHandShake refuses its own envelope sent back to it [\#33](https://github.com/JarbasHiveMind/poorman_handshake/pull/33) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.0.2a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.2a1) (2026-09-16)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.1a1...2.0.2a1)
