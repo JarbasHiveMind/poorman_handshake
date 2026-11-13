@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "poorman_handshake"
+description = "poor man's key exchange, powered by RSA"
+readme = "README.md"
+authors = [{ name = "jarbasAI", email = "jarbasai@mailfence.com" }]
+license = "Apache-2.0"
+requires-python = ">=3.10"
+keywords = ["hivemind", "crypto", "handshake", "rsa", "key-exchange"]
+dynamic = ["version"]
+dependencies = [
+    "pycryptodomex>=3.19.1",
+    "zxcvbn>=4.4.28",
+    "noiseprotocol>=0.3.1",
+    "argon2-cffi>=21.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/JarbasHiveMind/poorman_handshake"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = [
+    "poorman_handshake",
+    "poorman_handshake.asymmetric",
+    "poorman_handshake.symmetric",
+    "poorman_handshake.noise",
+]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "poorman_handshake.version.__version__" }

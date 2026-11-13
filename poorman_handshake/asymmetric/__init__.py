@@ -4,6 +4,7 @@ from os.path import isfile
 from typing import Union, Optional
 
 import logging
+import warnings
 import shutil
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
@@ -13,14 +14,24 @@ from poorman_handshake.asymmetric.utils import (
     export_RSA_key,
     decrypt_RSA,
     encrypt_RSA,
+    hybrid_encrypt_RSA,
+    hybrid_decrypt_RSA,
     sign_RSA,
     verify_RSA,
 )
 
 
+class InvalidSignatureError(ValueError):
+    """A handshake message's signature does not verify against the sender's public key."""
+
+
 class HandShake:
     """
-    Class for performing a secure handshake using RSA encryption and signatures.
+    RSA handshake using encryption and signatures (legacy; **discouraged**).
+
+    .. deprecated::
+        No forward secrecy and MITM-vulnerable on first contact. Prefer
+        :class:`poorman_handshake.noise.NoiseHandShake`.
 
     Attributes:
         private_key (RSA.RsaKey): The private RSA key for this handshake instance.
@@ -36,6 +47,15 @@ class HandShake:
             path (str, optional): Path to load or save the private key.
             key_size (int, optional): Size of the RSA key in bits (default is 2048).
         """
+        warnings.warn(
+            "RSA handshakes (HandShake/HalfHandShake) have no forward secrecy — a "
+            "later private-key compromise decrypts every past session — and are "
+            "vulnerable to a machine-in-the-middle on first contact. They are kept "
+            "for legacy interoperability; for new code use "
+            "poorman_handshake.noise.NoiseHandShake (see docs/security.md).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.private_key = None
         if path and isfile(path):
 
@@ -153,22 +173,37 @@ class HandShake:
         return verify_RSA(pub, ciphertext, signature)
 
     def receive_and_verify(self, shake: Union[str, bytes],
-                           pub: Optional[Union[str, bytes, RSA.RsaKey]] = None):
+                           pub: Optional[Union[str, bytes, RSA.RsaKey]] = None) -> bool:
         """
         Verifies and processes a handshake message.
 
         Args:
             shake (bytes): Hex-encoded handshake message (signature + ciphertext).
             pub (str, optional): Public key in PEM format of the sender.
+
+        Returns:
+            bool: True once the signature verified and the secret was received.
+
+        Raises:
+            InvalidSignatureError: the signature does not verify. ``secret`` is
+                not changed.
         """
         pub = pub or self.target_key
-        if self.verify(shake, pub):
-            self.receive_handshake(shake)
+        if not self.verify(shake, pub):
+            # Returning quietly here left ``secret`` at whatever the caller
+            # held, which callers then used as the session key.
+            raise InvalidSignatureError("handshake signature does not verify")
+        self.receive_handshake(shake)
+        return True
 
 
 class HalfHandShake(HandShake):
     """
-    A simpler handshake implementation where the shared secret is directly decrypted.
+    One-way RSA handshake, secret chosen by the sender (legacy; **discouraged**).
+
+    Prefer :class:`poorman_handshake.noise.NoiseHandShake` — see docs/security.md.
+    Instantiation emits the RSA-handshake warning inherited from
+    :class:`HandShake`.
     """
 
     def receive_handshake(self, shake: Union[str, bytes]):
