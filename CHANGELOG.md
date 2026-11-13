@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.4a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.4a1) (2026-11-13)
+
+[Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.3a1...2.0.4a1)
+
+**Merged pull requests:**
+
+- fix\(tests\): drop tests/\_\_init\_\_.py so build\_tests imports the wheel [\#36](https://github.com/JarbasHiveMind/poorman_handshake/pull/36) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [2.0.3a1](https://github.com/JarbasHiveMind/poorman_handshake/tree/2.0.3a1) (2026-09-16)
 
 [Full Changelog](https://github.com/JarbasHiveMind/poorman_handshake/compare/2.0.2a1...2.0.3a1)
